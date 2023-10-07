@@ -1,0 +1,11 @@
+v 1.0
+d NETWORK: A Stata package for Delaunay triangles, Voronoi tessellation, and Convex hull
+d  
+d This  version: 04 Sep 2022
+d First version: 22 Nov 2021
+d
+d Asjad Naqvi, 
+d asjadnaqvi@gmail.com
+d https://medium.com/the-stata-guide
+d https://github.com/asjadnaqvi/Stata-schemes
+
