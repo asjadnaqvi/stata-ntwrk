@@ -3,9 +3,14 @@
 
 
 *** Source of most of the routines are from:
+* R: 	  https://igraph.org/
+* Python: https://networkx.org/
 
-* R: 	  https://github.com/igraph/igraph
-* Python: https://github.com/networkx/networkx/tree/main/networkx
+
+** TODO:
+** closeness failing with isolates
+** pagerank failing for some networks
+
 
 cap prog drop network
 
@@ -13,13 +18,13 @@ prog def network, sortpreserve
 
 	version 15
 	
-	syntax varlist(min = 3 max = 3) [if] [in],	 			///     // from, to, value
-		[ between degree indegree outdegree closeness eigenval eigenvec katz pagerank hits	] 	///  // node measures
-		[ ITERations(real 100) TOLerance(real 1e-6) ]   	///		// common parameters
-		[ layout(string)                            ] 		///		// draw the graphs
-		[ lcats(real 5)                             ] 		///		// link options
-		[ ncats(real 5) nvar(string)                ]				// node options
-		
+	syntax varlist(min = 3 max = 3) [if] [in] ,  	 												///     // from, to, value
+		[ between indegree outdegree closeness eigenval eigenvec katz pagerank hits	] 	///  	// node measures
+		[ ITERations(real 100) TOLerance(real 1e-6) radius(real 5) ]   										///		// common parameters
+		[ layout(string)                            ] 											///		// draw the graphs
+		[ LCATs(real 10) LWidth(real 1) LAlpha(real 80) reduce(real 0)   ] 					///		// link options
+		[ MCATs(real 10) mvar(string) MSize(string) MAlpha(real 80) MSYMbol(string)   	]			///									// node options
+		[ savedata saveprefix(string) NOGRaph palette(string) ]      // saving options
 
 		
 	// check dependencies
@@ -28,10 +33,15 @@ prog def network, sortpreserve
 		display as error "The palettes package is missing. Install the {stata ssc install palettes, replace:palettes} and {stata ssc install colrspace, replace:colrspace} packages."
 		exit
 	}		
+	
+	if !inlist("`layout'", "", "star", "fr", "sphere") {
+		di as error "Valid options for {opt layout()} are {it:star}, {it:fr}, or {it:sphere}."
+		exit
+	}
 		
 		
-		
-		
+	marksample touse, strok	
+	
 	
 	tokenize "`varlist'"
 	
@@ -39,43 +49,46 @@ prog def network, sortpreserve
 	local t `2'  // to 
 	local v `3'  // value
 	
-	marksample touse, strok
 	
-	****** make sure variables are numeric
+	
+	
+preserve
+	qui {	
+	// store original information in a copy
+	
+		
+		tempfile _network_copy
+		qui keep if `touse'
+		collapse (sum) `v', by(`f' `t')  // ensure uniqueness
+		compress
+		save `_network_copy'
+	
 
-	* qui collapse (sum) `v', by(`f' `t')  // ensure uniqueness
-	* qui keep if `touse'
-	
-	
-	qui {
+	// make sure variables are numeric
 	if (substr("`: type `f''",1,3) == "str") & (substr("`: type `t''",1,3) == "str") { 
 	
-		di "Assigning numerical values"
-	
-		// numerify the text
-		preserve
-			tempvar _numerify
-			keep `f' `t'
-			cap ren `f' 		_v1
-			cap ren `t' _v2
-			gen serial = _n
-			reshape long _v, i(serial) j(layer)
-			cap drop layer serial
-			duplicates drop _v, force
-			sort _v
-			
-			encode _v, gen(_vnum)
-			save `_numerify', replace
-		restore
+		// numerify the string variables	
+		tempvar _numerify
+		keep `f' `t'
+		cap ren `f'	_v1
+		cap ren `t' _v2
+		gen serial = _n
+		reshape long _v, i(serial) j(layer)
+		cap drop layer serial
+		duplicates drop _v, force
+		sort _v
+		encode _v, gen(_vnum)
+		save `_numerify', replace
+		
 
 		// swap from
+		use `_network_copy', clear
 		ren `f' _v
 		merge m:1 _v using `_numerify'
 		keep if _m==3
 		drop _m _v
 		ren _vnum `f'
 		
-
 		// swap to
 		ren `t' _v
 		merge m:1 _v using `_numerify'
@@ -85,42 +98,38 @@ prog def network, sortpreserve
 
 		order `f' `t'
 	}
-	}
 
+	
+	save `_network_copy', replace
 
 	****** pass to Mata
-	
-	
-
-	mata: points  = select(st_data(., ("`varlist'")), st_data(., "`touse'"))
-	mata: square = square(points)
-	mata: binary = binary(square)
+	mata: points = st_data(., ("`varlist'")); square = square(points); binary = binary(square)
 	
 	
 	// prepare a matrix for storing results
-	mata: exports = J(rows(binary), 0, .)
-	mata: mylist = ""
+	mata: exports = J(rows(binary), 0, .); mylist = ""
+	
+	
+	// degree is always returned
+		mata: degree     = degree(binary)
+		mata: exports 	= exports , degree
+		mata: mylist = mylist + " degree"
+		mata: st_local("header", mylist)
+	
+	
 	
 	if "`between'"   != "" {
 		mata: between    = between(binary)
 		mata: exports 	= exports , between
-		mata: mylist = mylist + "_between"
+		mata: mylist = mylist + " between"
 		mata: st_local("header", mylist)
 	}
-	
 
-	if "`degree'"    != "" {
-		mata: degree     = degree(binary)
-		mata: exports 	= exports , degree
-		mata: mylist = mylist + " _degree"
-		mata: st_local("header", mylist)
-	}	
-	
 	
 	if "`indegree'"  != "" {
 		mata: indegree   = indegree(binary)
 		mata: exports 	= exports , indegree
-		mata: mylist = mylist + " _indegree"
+		mata: mylist = mylist + " indegree"
 		mata: st_local("header", mylist)		
 	}
 	
@@ -128,7 +137,7 @@ prog def network, sortpreserve
 	if "`outdegree'" != "" {
 		mata: outdegree  = outdegree(binary)
 		mata: exports 	= exports , outdegree
-		mata: mylist = mylist + " _outdegree"
+		mata: mylist = mylist + " outdegree"
 		mata: st_local("header", mylist)		
 	}	
 	
@@ -136,7 +145,7 @@ prog def network, sortpreserve
 	if "`closeness'" != "" {
 		mata: closeness  = closeness_centrality(binary)
 		mata: exports 	= exports , closeness
-		mata: mylist = mylist + " _closeness"
+		mata: mylist = mylist + " closeness"
 		mata: st_local("header", mylist)			
 	}
 
@@ -144,25 +153,23 @@ prog def network, sortpreserve
 	if "`eigenval'"  != "" {
 		mata: eigenval   = eigenvalue_centrality(binary, `iterations', `tolerance')
 		mata: exports 	= exports , eigenval
-		mata: mylist = mylist + " _eigenval"
+		mata: mylist = mylist + " eigenval"
 		mata: st_local("header", mylist)			
 	}	
-		
 		
 		
 	if "`eigenvec'"  != "" {
 		mata: eigenvec  = eigenvectorcent(binary)
 		mata: exports 	= exports , eigenvec
-		mata: mylist    = mylist + " _eigenvec"
+		mata: mylist    = mylist + " eigenvec"
 		mata: st_local("header", mylist)			
 	}
 	
 		
-	
 	if "`katz'" 	 != "" {
 		mata: katz  	= katz_centrality(binary, 0.1, 1)
 		mata: exports   = exports , katz
-		mata: mylist    = mylist + " _katz"
+		mata: mylist    = mylist + " katz"
 		mata: st_local("header", mylist)		
 	}
 	
@@ -170,7 +177,7 @@ prog def network, sortpreserve
 	if "`pagerank'"  != "" {
 		mata: pagerank  = pagerank(binary, 0.85, `iterations', `tolerance')
 		mata: exports 	= exports , pagerank
-		mata: mylist    = mylist + " _pagerank"
+		mata: mylist    = mylist + " pagerank"
 		mata: st_local("header", mylist)			
 	}
 
@@ -178,7 +185,7 @@ prog def network, sortpreserve
 	if "`hits'"  	 != "" {
 		mata: hits(binary, `iterations', `tolerance', hub=., authority=.)
 		mata: exports 	= exports , hub, authority
-		mata: mylist = mylist + " _hub _authority"
+		mata: mylist = mylist + " hub authority"
 		mata: st_local("header", mylist)		
 	}
 
@@ -188,84 +195,61 @@ prog def network, sortpreserve
 	*****      layouts		*****
 	*****************************
 
+	
 	tempfile _layout_nodes
 	
+	
+	drop `v'
+	duplicates drop `f' `t', force  // reduce 1
+	
+	gen id = _n
+	
+	cap ren `f' _id1
+	cap ren `t' _id2
+	reshape long _id, i(id) j(node)
+	duplicates drop _id, force  // reduce 2
+	cap drop id node
+	sort _id
+	
+	
+	
 	if "`layout'" == "star" | "`layout'"== "" {
-	qui {
-	preserve
-		drop `v'
-		gen id = _n
-
-		cap ren `f' _id1
-		cap ren `t' _id2
-
-		reshape long _id, i(id) j(node)
-
-		duplicates drop _id, force
-		cap drop id node
-		sort _id
-		
 		gen double angle = (_n * 2 * -_pi / _N)
-
-
-		local radius = 5
 		gen double _x = `radius' * cos(angle)
 		gen double _y = `radius' * sin(angle)
+		
+	}
 	
-		keep _id _x _y
-		sort _id	
-		compress
-		save `_layout_nodes', replace
-
-	restore
-	}
-	}
 	
 	if "`layout'" == "fr" {
-		
-
 		mata: positions = fr_layout(binary, 1000, 20, 20 )
-		
-		qui {
-		preserve
-			mata: st_matrix("positions", positions)
-			clear
-			mat colnames positions = "_id" "_x" "_y"
-			svmat positions, n(col)
-			compress
-			sort _id	
-			save `_layout_nodes', replace
-		restore
-		}
+		mata: st_matrix("positions", positions)
+		mat colnames positions = "_check" "_x" "_y"
+		svmat positions, n(col)
 	}
 	
+	
 	if "`layout'" == "sphere" {
-		
 		mata: sphere = layout_sphere(binary)
-		
-		qui {
-		preserve
-			mata: st_matrix("sphere", sphere)
-			clear
-			mat colnames sphere = "_id" "_x" "_y" "_z"
-			svmat sphere, n(col)
-			cap drop _z
-			sort _id	
-			compress
-			save `_layout_nodes', replace
-		restore		
-		}
+		mata: st_matrix("sphere", sphere)
+		mat colnames sphere = "_check" "_x" "_y" "_z"
+		svmat sphere, n(col)
+		cap drop _z
 	}	
 
+	keep _id _x _y
+	sort _id	
+	compress
+
+	save `_layout_nodes'
 	
 	
+	*******************************
+	*** get the links in order  ***
+	*******************************
 	
-	*************************
-	*** append the nodes  ***
-	*************************
+	use `_network_copy', clear
 	
-	if "`layout'" != "" {
-	qui {	
 	cap ren `f' _id
 
 	merge m:1 _id using `_layout_nodes'
@@ -288,26 +272,63 @@ prog def network, sortpreserve
 
 	// replace own flows
 	gen _ownflow = `f'==`t'
-
-	///////////
-	// nodes //
-	///////////
 	
-	// add node attributes
 	
-	preserve
+	// reduce the length of the links by  r    
+	
+	
+	
+	tempvar dx dy p1x p1y p2x p2y L rate
+	gen double `p1x' = _fx
+	gen double `p1y' = _fy
+	
+	gen double `p2x' = _tx
+	gen double `p2y' = _ty
+	
+	
+	// reduce by x% points
+	/*
+	local r2 = ((100 - `reduce') / 100) / 2
+	
+	replace _fx = ((1 - `r2') * `p2x') + (`r2' * `p1x')
+	replace _fy = ((1 - `r2') * `p2y') + (`r2' * `p1y')
+	replace _tx = ((1 - `r2') * `p1x') + (`r2' * `p2x')
+	replace _ty = ((1 - `r2') * `p1y') + (`r2' * `p2y')	
+	*/
+	
+	
+	// reduce by a fixed length
+	gen double `dx' = `p2x' - `p1x'
+	gen double `dy' = `p2y' - `p1y'
+	
+	gen double `L' = sqrt((`p2x' - `p1x')^2 + (`p2y' - `p1y')^2)  // hypotenuse
+	local deltaL   = `reduce'
+	gen double `rate' = `deltaL' / `L'
+	
+	
+	replace _fx = ((1 - `rate') * `p2x') + (`rate' * `p1x')
+	replace _fy = ((1 - `rate') * `p2y') + (`rate' * `p1y')
+	replace _tx = ((1 - `rate') * `p1x') + (`rate' * `p2x')
+	replace _ty = ((1 - `rate') * `p1y') + (`rate' * `p2y')		
+	
+	
+	drop `dx' `dy' `p1x' `p1y' `p2x' `p2y' `L' `rate'
+	
+	save `_network_copy', replace
+	
+	// add the nodes with attributes 
+	
+	// add node attributes back to Stata
 		use `_layout_nodes', clear
-		
 		mata st_matrix("exports", exports)
 		mat colnames exports = `header'
 		svmat exports, n(col)
-
-	
 		save `_layout_nodes', replace
 	
-	restore	
+
 	
 	// add node data
+	use  `_network_copy', replace
 	append using `_layout_nodes'
 	recode _control (.=1)
 
@@ -316,69 +337,109 @@ prog def network, sortpreserve
 	lab de _control 0 "Links" 1 "Nodes"
 	lab val _control _control
 	
-	***** weight the links
-	xtile lquant = `v', n(`lcats')   // tokenize
-	
-	***** weight the links
-	if "`nvar'" != "" xtile nquant = `nvar', n(`ncats')
-	
-	
+
 	************
 	*** plot ***
 	************
-	
-	colorpalette tableau, nograph
-	
-	local clr1 "`r(p1)'"
-	local clr2 "`r(p2)'"
-	
-	// weighted lines
-	levelsof lquant, local(lvls)
-	
-	foreach x of local lvls {
-		local lwgt = (sqrt(`x' * 2) / 3)
-		
-		local arrows `arrows' (pcarrow _fy _fx _ty _tx if !_ownflow & lquant==`x', msize(small) lw(`lwgt') lc("`clr1'%70") mc("`clr1'%70") ) 
-		
-	}
-	
-	
-	// weighted nodes
-	
-	if "`nvar'" != "" {
-	
-		levelsof nquant, local(lvls)
-		
-		foreach x of local lvls {
-			local nwgt = (sqrt(`x' * 2) * 3)
-			
-			local dots `dots' (scatter _y _x  if nquant==`x', mlab(_id) msize(`nwgt') mlabpos(0) mcolor("`clr2'%90")  )
-			
-		}
+
+	if "`nograph'" != "" {
+		local graph ""
 	}
 	else {
-		local dots (scatter _y _x , mlab(_id) msize(8) mlabpos(0) mcolor("`clr2'%90")  ) 
+		local graph "graph"
 	}
+	
+	if "`graph'" != "" {
 		
+		***** weight the links
+		xtile lquant = `v', n(`lcats')   // tokenize
+		
+		if "`palette'" == "" local palette tableau
+		
+		colorpalette `palette', nograph
+		
+		local clr1 "`r(p1)'"
+		local clr2 "`r(p2)'"
+		
+		// weighted lines
+		levelsof lquant, local(lvls)
+		
+		foreach x of local lvls {
+			local lwgt = (sqrt(`x' * 2) / 3) * `lwidth'
+			
+			local arrows `arrows' (pcarrow _fy _fx _ty _tx if !_ownflow & lquant==`x', msize(small) lw(`lwgt') lc("`clr1'%`lalpha'") mc("`clr1'%`lalpha'")  )  ||
+			
+		}
+	
+		
+		// weighted nodes
+		
+		***** weight the nodes
+		if "`mvar'" 	!= "" xtile mquant = `mvar', n(`mcats')
+		if "`msymbol'" 	== "" local msymbol circle	
+		if "`msize'"    == "" local msize   3	
+
+		
+		if "`mvar'" 	!= "" {
+		
+			levelsof mquant, local(lvls)
+			
+			foreach x of local lvls {
+				local mwgt = (sqrt(`x' * 2) * `msize')
+				
+				local dots `dots' (scatter _y _x if _control & mquant==`x'	, msymbol("`msymbol'") mlabpos(0) mcolor("`clr2'%`malpha'") mlab(_id) msize(`mwgt')   ) 
+				
+			}
+		}
+		else {
+				local dots 		  (scatter _y _x if _control   				, msymbol("`msymbol'") mlabpos(0) mcolor("`clr2'%`malpha'") mlab(_id) msize(`msize')    )
+			
+			
+		}
 	
 	
-	// final plot
 	
-	twoway ///
-		`arrows'   ///  // lc(black)
-		`dots'   /// // (scatter _y _x , mlab(_id) msize(8) mlabpos(0) mcolor("`clr2'%90")  ) ///
-		, ///
-		legend(off) ///
-			xscale(off) yscale(off)	///
-			xlabel(, nogrid) ylabel(, nogrid) ///
-			aspect(1) xsize(1) ysize(1)
+		// final plot
+	
+	
+	
+	
+		twoway ///
+			`arrows'   /// 
+			`dots'   /// 
+			, ///
+			legend(off) ///
+				xscale(off) yscale(off)	///
+				xlabel(, nogrid) ylabel(, nogrid) ///
+				aspect(1) xsize(1) ysize(1) 
+				
+	}
+	
+	
+	**************
+	*** export ***
+	**************
+	
+	if "`savedata'" != "" {
+		compress 
+		cap drop _check
+		order _control
+		save "`saveprefix'_network.dta", replace
+		noi di in yellow "File `saveprefix'_network.dta sucessfully exported."
+	}
 	
 
 	}
-	}
+	
+	
+restore	
 	
 end
 
+
+*************************************************
+*********	 Mata routines below 	   **********
+*************************************************
 
 
 *************************
@@ -452,7 +513,7 @@ real scalar function dequeue(real vector A)
 end
 
 ****************
-//  between   //  //  from nwcommands. Rewrite to make it more efficient
+//  between   //  //  from nwcommands. 
 ****************
 
 
@@ -617,7 +678,7 @@ real vector BFS(real matrix G, real scalar source)
 }
 end
 
-cap mata: mata drop closeness_centrality()
+cap mata: mata drop closeness_centrality()  
 
 mata:
 real vector closeness_centrality(real matrix G) {
@@ -891,6 +952,11 @@ real matrix fr_layout(real matrix A, real scalar iterations, real scalar width, 
 
 end
 
+
+*** FR cooling function
+
+cap mata: mata drop cool() 
+
 mata:
 
 real scalar cool(real scalar t, real scalar iter, real scalar max_iter)
@@ -922,8 +988,8 @@ real matrix layout_sphere(real matrix G)
 
 
     for (i = 1; i <= N; i++) {
-        // Handle poles separately to avoid division by zero or slightly negative 1-z*z
-        if (i == 1) {
+       
+        if (i == 1) {    // Avoid division by zero or slightly negative 1-z*z
             z = -1
             r = 0
         } 
@@ -931,18 +997,16 @@ real matrix layout_sphere(real matrix G)
             z = 1
             r = 0
         }
-        else {
-            // Otherwise, compute z, r, and update phi
+        else { // compute z, r, and update phi
             z = -1 + 2 * (i - 1) / (N - 1)
             r = sqrt(1 - z^2)
             phi = phi + 3.6 / (sqrN * r)
         }
         
-        // Convert spherical to Cartesian coordinates
+        // convert to Cartesian coordinates
         x = r * cos(phi)
         y = r * sin(phi)
         
-        // Store coordinates
         res[i, 1] = x
         res[i, 2] = y
         res[i, 3] = z

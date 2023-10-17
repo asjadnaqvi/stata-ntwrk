@@ -1,5 +1,5 @@
 {smcl}
-{* 06October2023}{...}
+{* 17October2023}{...}
 {hi:help network}{...}
 {right:{browse "https://github.com/asjadnaqvi/stata-network":network v1.0 (beta) (GitHub)}}
 
@@ -18,17 +18,17 @@ The package is still in its initial stages so please report bugs and enhancement
 
 
 TODO:
-- Add support for weighted network measures.
-- Add support for matrix or mata networks.
-- Add support for labels and string variables.
-- Add support for curved egdes.
-
+- Fix centrality
+- Fix pagerank
+- Add support for link weights
+- Add support for custom node attributes
+- Add option for expanding or contracting layouts
 
 {marker syntax}{title:Syntax}
 
 {p 8 15 2}
 {cmd:network} {it:from to value} [if] [in] {cmd:[}, 
-	 {cmd:between} {cmd:degree} {cmd:indegree} {cmd:outdegree} {cmd:closeness} {cmd:eigenval} {cmd:eigenvec} {cmd:katz} {cmd:pagerank} {cmd:hits}
+	 {cmd:degree} {cmd:indegree} {cmd:outdegree} {cmd:between} {cmd:closeness} {cmd:eigenval} {cmd:eigenvec} {cmd:katz} {cmd:pagerank} {cmd:hits}
 	 {cmdab:iter:ations}(num) {cmdab:tol:erance}(num) 
 	 {cmd:layout}({it:star}|{it:fr}|{it:sphere})
 	 {cmd:lcats}(num) {cmd:ncats}(num) {cmd:nvar}(string)
@@ -50,32 +50,34 @@ The options are described as follows:
 {p 4 4 2}
 {it:{ul:Node measures}}
 
-{p2coldent : {opt between}}Betweenness centrality.{p_end}
+{p2coldent : {opt degree}}Node degree = indegree + outdegree. This measure is always calculated.{p_end}
 
-{p2coldent : {opt degree}}Node degree.{p_end}
+{p2coldent : {opt indegree}}Node in-degree. Stores "indegree" variable in the nodes attributes file.{p_end}
 
-{p2coldent : {opt indegree}}Node in-degree.{p_end}
+{p2coldent : {opt outdegree}}Node out-degree. Stores "outdegree" variable.{p_end}
 
-{p2coldent : {opt outdegree}}Node our-degree.{p_end}
+{p2coldent : {opt between}}Betweenness centrality. Stores "between" variable.{p_end}
 
-{p2coldent : {opt closeness}}Closeness centrality.{p_end}
+{p2coldent : {opt closeness}}Closeness centrality. Stores "closeness" variable. BUGGED! MIGHT NOT WORK WITH SOME NETWORKS.{p_end}
 
-{p2coldent : {opt eigenval}}Eigenvalue centrality.{p_end}
+{p2coldent : {opt eigenval}}Eigenvalue centrality. Stores "eigenval" variable.{p_end}
 
-{p2coldent : {opt eigenvec}}Eigenvector centrality.{p_end}
+{p2coldent : {opt eigenvec}}Eigenvector centrality. Stores "eigenvec" variable.{p_end}
 
-{p2coldent : {opt katz}}Katz centrality.{p_end}
+{p2coldent : {opt katz}}Katz centrality. Stores "katz" variable.{p_end}
 
-{p2coldent : {opt pagerank}}Google's Pagerank algorithm.{p_end}
+{p2coldent : {opt pagerank}}Google's Pagerank algorithm. Stores "pagerank" variable. BUGGED! MIGHT NOT WORK WITH SOME NETWORKS.{p_end}
 
-{p2coldent : {opt hits}}Hyperlink-Induced Topic Search (HITS) algorithm which returns "hub" and "authority" measures.{p_end}
+{p2coldent : {opt hits}}Hyperlink-Induced Topic Search (HITS) algorithm which returns "hub" and "authority" variables.{p_end}
 
 {p 4 4 2}
-{it:{ul:Node parameters}}
+{it:{ul:Network parameters}}
 
 {p2coldent : {opt iter(num)}}Number of iterations. Default is {opt iter(100)}.{p_end}
 
 {p2coldent : {opt tol:erance(num)}}Tolerance level for convergence. Default is {opt tol(1-e6)}.{p_end}
+
+{p2coldent : {opt radius(num)}}Radius for the "star" layout. Default is {opt radius(5)}.{p_end}
 
 
 {p 4 4 2}
@@ -88,18 +90,47 @@ Users can chose from the following layout options:
 
 {p2coldent : {opt layout(fr)}}Fruchterman-Reingold layout. A force-directed layout algorithm. Strength of ties determine repulsion and attraction.{p_end}
 
-{p2coldent : {opt layout(sphere)}}Layout the nodes on a sphere. The z-dimension is also returned but dropped for now.{p_end}
+{p2coldent : {opt layout(sphere)}}Layout the nodes on a sphere. The z-dimension is also returned but dropped for now. 
+BUGGED! END CATEGORIES ARE DRAWN IN THE MIDDLE IN SOME NETWORKS.{p_end}
+
 
 {p 4 4 2}
-{it:{ul:Layout parameters}}
+{it:{ul:Link parameters}}
 
-{p2coldent : {opt lcats(num)}}Edge width determined by num percentiles. Default is {opt lcats(5)}.{p_end}
+{p2coldent : {opt lcat:s(num)}}Link width categories determined by {it:num} percentiles. Default is {opt lcats(10)}.{p_end}
 
-{p2coldent : {opt ncats(num)}}Node sizes determined by num percentiles. Default is {opt ncats(5)}.{p_end}
+{p2coldent : {opt lw:idth(num)}}Link width multiplier. Default is {opt lw(1)}.{p_end}
 
-{p2coldent : {opt nvar(str)}}The variable that determines the node size. This needs to be a valid node-level variable generated from one of 
-the network measures. Highly recommended to specify this in the second step after generating the measures.{p_end}
+{p2coldent : {opt la:lpha(num)}}Transparency of the links. Default is {opt la(80)}.{p_end}
 
+{p2coldent : {opt reduce(num)}}The amount of length of links to reduce defined in pixels. Default is {opt reduce(0)}.{p_end}
+
+
+{p 4 4 2}
+{it:{ul:Node or marker parameters}}
+
+{p2coldent : {opt mcat:s(num)}}Marker size categories determined by {it:num} percentiles. Default is {opt mcats(10)}.{p_end}
+
+{p2coldent : {opt mvar(str)}}The variable for determining the size of the markers. This can be any returned variable defined above.
+Default is {opt mvar(between)} which is always returned.{p_end}
+
+{p2coldent : {opt ms:ize(str)}}The size multiplier of the markers. Default is {opt ms(3)}.{p_end}
+
+{p2coldent : {opt ma:lpha(num)}}Transparency of the nodes. Default is {opt ma(80)}.{p_end}
+
+{p2coldent : {opt msym:bol(num)}}Symbol of the nodes. Default is {opt msym(circle)}.{p_end}
+
+{p 4 4 2}
+{it:{ul:Additional options}}
+
+{p2coldent : {opt palette(str)}}Any valid palette in the colorpalette package. Default is {opt palette(tableau)}.{p_end}
+
+{p2coldent : {opt nograph}}Do no draw the graph.{p_end}
+
+{p2coldent : {opt savedata}}Export the graph file with the drawing coordinates and network measures.
+Default name is {it:_network.dta}. The file will be saved in the set directory.{p_end}
+
+{p2coldent : {opt saveprefix(str)}}Add a prefix to the exported file: {it:(prefix)_network.dta}.{p_end}
 
 {title:Dependencies}
 
@@ -124,8 +155,8 @@ See {browse "https://github.com/asjadnaqvi/stata-network":GitHub} for examples.
 {title:Package details}
 
 Version      : {bf:network} v1.0 (beta)
-This release : 06 Oct 2023
-First release: 06 Oct 2023
+This release : 17 Oct 2023
+First release: 17 Oct 2023
 Repository   : {browse "https://github.com/asjadnaqvi/network":GitHub}
 Keywords     : Stata, networks, graphs, measures
 License      : {browse "https://opensource.org/licenses/MIT":MIT}
@@ -138,13 +169,6 @@ Twitter      : {browse "https://twitter.com/AsjadNaqvi":@AsjadNaqvi}
 {title:How to cite this package}
 
 {p 4 8 2}Naqvi, A. (2023). network v1.0: A Stata package for network analysis. {browse "https://github.com/asjadnaqvi/stata-network":https://github.com/asjadnaqvi/stata-network}.
-
-
-{title:Acknowledgments}
-
-{p 4 4 2}
-The package greatly benefited from.... 
-
 
 
 {title:Feedback and issues}

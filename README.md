@@ -9,9 +9,9 @@
 ---
 
 # network v1.0 (beta)
-(07 Oct 2023)
+(17 Oct 2023)
 
-This package allows users to draw network plots in Stata. 
+This package allows users to draw network plots in Stata. The package is still beta is constantly being updated. Please continue to check here for newer versions. Please also feel free to submit requests in the Issues section.
 
 
 ## Installation
@@ -62,9 +62,8 @@ graph set window fontface "Arial Narrow"
 The syntax for the latest version is as follows:
 
 ```applescript
-        network from to value [if] [in] [, between degree indegree outdegree closeness eigenval eigenvec katz pagerank hits iterations(num)
+        network from to value [if] [in] [, degree indegree outdegree between closeness eigenval eigenvec katz pagerank hits iterations(num)
                tolerance(num) layout(star|fr|sphere) lcats(num) ncats(num) nvar(string) ]
-
 ```
 
 See the help file `help network` for details.
@@ -84,10 +83,107 @@ network from to value [, network measures] [layout measures]
 Get the example data from GitHub:
 
 ```
-import excel using "https://github.com/asjadnaqvi/stata-network/blob/main/data/network_example2.xlsx?raw=true", clear first
+use "https://github.com/asjadnaqvi/stata-network/blob/main/data/trade_data.dta", clear first
 ```
 
 Let's test the `network` command:
+
+
+```
+network ex_iso2 im_iso2 value if value > 50000
+```
+
+<img src="/figures/network1.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(sphere) 
+```
+
+<img src="/figures/network2.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(sphere) mvar(degree) 
+```
+
+<img src="/figures/network3.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(sphere) mvar(degree) msize(1.6) mcat(10)
+```
+
+<img src="/figures/network4.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(sphere) ///
+	mvar(degree) msize(1.6) mcat(10) lcat(15) lw(0.6)
+```
+
+<img src="/figures/network5.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(star) ///
+	mvar(degree) msize(1.3) mcat(10) lcat(15) lw(0.6)	
+```
+
+<img src="/figures/network6.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(fr) ///
+	mvar(degree) msize(1.3) mcat(10) lcat(15) lw(0.6)
+```
+
+<img src="/figures/network7.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(fr) ///
+	mvar(degree) msize(1.3) mcat(10) lcat(15) lw(0.6) ///
+	malpha(90) lalpha(50)
+```
+
+<img src="/figures/network8.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, layout(fr) ///
+	mvar(degree) msize(1.3) mcat(10) lcat(15) lw(0.6) ///
+	malpha(90) lalpha(50)	
+```
+
+<img src="/figures/network9.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, ///
+	indegree outdegree katz closeness eigenval eigenvec hits ///
+	layout(fr) mvar(indegree) msize(1.3)  lw(0.6) ///
+	malpha(90) lalpha(50)	
+```
+
+<img src="/figures/network10.png" height="500">
+
+```
+network ex_iso2 im_iso2 value if value > 50000, ///
+	indegree outdegree katz closeness eigenval eigenvec hits ///
+	layout(star) mvar(indegree) msize(1.3)  lw(0.6) ///
+	malpha(90) lalpha(50) reduce(0.5)	
+```
+
+<img src="/figures/network11.png" height="500">
+
+
+### Exporting the data
+
+We can export the layout and measures using the following options:
+
+```
+network ex_iso2 im_iso2 value if value > 50000, indegree outdegree between katz closeness eigenval eigenvec hits  ///
+	savedata layout(fr) nograph
+```
+
+Here we export a file that can be loaded and customized:
+
+```
+use _network.dta	
+```
+
 
 
 
@@ -98,7 +194,7 @@ Please open an [issue](https://github.com/asjadnaqvi/stata-network/issues) to re
 
 ## Change log
 
-**v1.0 (07 Oct 2023)**
+**v1.0 (17 Oct 2023)**
 - Beta release.
 
 
