@@ -1,11 +1,9 @@
 v 1.0
-d NETWORK: A Stata package for Delaunay triangles, Voronoi tessellation, and Convex hull
+d NTWRK: A Stata package for network analysis
 d  
-d This  version: 04 Sep 2022
-d First version: 22 Nov 2021
+d This version: 02 Jun 2026
+d First version: 02 Jun 2026
 d
 d Asjad Naqvi, 
 d asjadnaqvi@gmail.com
-d https://medium.com/the-stata-guide
-d https://github.com/asjadnaqvi/Stata-schemes
 

@@ -1,0 +1,19 @@
+v 1.0
+d {bf:NTWRK}: A Stata package for network analysis
+d
+d KW: Stata
+d KW: graphs
+d KW: network
+d
+d Distribution-Date: 20260602
+d License: MIT
+d
+d Author: Asjad Naqvi
+d E-mail: asjadnaqvi@gmail.com
+d
+f ntwrk.ado
+f ntwrk.sthlp
+
+
+
+
