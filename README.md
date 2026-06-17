@@ -22,17 +22,17 @@ Node-level measures are requested via `measure(namelist)`. When `measure()` is o
 | `degree` | Total (undirected) degree: number of distinct neighbours regardless of direction. |
 | `indegree` | Number of edges pointing **into** a node (in-degree). In undirected graphs equals `degree`. |
 | `outdegree` | Number of edges pointing **out of** a node (out-degree). In undirected graphs equals `degree`. |
-| `between` | **Betweenness centrality** — the fraction of all shortest paths in the network that pass through a node. High values indicate bridge or bottleneck nodes. Normalised by $(n-1)(n-2)$ for directed graphs and halved for undirected. |
-| `closeness` | **Closeness centrality** — the reciprocal of the average shortest-path distance from a node to all reachable nodes. Nodes that can quickly reach all others score high. Computed on inbound distances (reversed graph). |
-| `harmonic` | **Harmonic centrality** — sum of reciprocal distances to all other reachable nodes, normalised by $n-1$. Handles disconnected graphs gracefully because unreachable pairs contribute zero rather than infinity. Computed on inbound distances. |
-| `clustering` | **Local clustering coefficient** — the fraction of a node's pairs of neighbours that are themselves connected. Measures how tightly knit the local neighbourhood is. |
-| `transitivity` | **Global transitivity (network-level)** — ratio of closed triangles to all connected triples in the graph. A single graph-level scalar assigned identically to every node in the output. |
-| `eccentricity` | **Eccentricity** — the maximum shortest-path distance from a node to any other reachable node. The minimum eccentricity across all nodes is the graph *radius*; the maximum is the graph *diameter*. |
-| `eigenval` | **Eigenvalue centrality score** — the dominant eigenvalue of the adjacency matrix, reported as a constant for the graph. Companion to `eigenvec`. |
-| `eigenvec` | **Eigenvector centrality** — each node's component in the principal eigenvector of the adjacency matrix. A node scores high if it is connected to other high-scoring nodes. |
-| `katz` | **Katz centrality** — a damped version of eigenvector centrality that also credits nodes for *all* paths (not just shortest), with longer paths discounted by an attenuation factor $\alpha$ (default $\alpha = 0.1/\lambda_{\max}$). |
-| `pagerank` | **PageRank** — the stationary distribution of a random walker who follows edges with probability $(1-d)$ and teleports with probability $d$ (damping factor, default 0.85). Widely used to rank nodes in directed graphs. |
-| `hits` | **HITS (Hyperlink-Induced Topic Search)** — computes two scores per node: *hub* (a good hub points to good authorities) and *authority* (a good authority is pointed to by good hubs). Both scores are stored as separate variables. |
+| `between` | **Betweenness centrality**: the fraction of all shortest paths in the network that pass through a node. High values indicate bridge or bottleneck nodes. Normalised by $(n-1)(n-2)$ for directed graphs and halved for undirected. |
+| `closeness` | **Closeness centrality**: the reciprocal of the average shortest-path distance from a node to all reachable nodes. Nodes that can quickly reach all others score high. Computed on inbound distances (reversed graph). |
+| `harmonic` | **Harmonic centrality**: sum of reciprocal distances to all other reachable nodes, normalised by $n-1$. Handles disconnected graphs gracefully because unreachable pairs contribute zero rather than infinity. Computed on inbound distances. |
+| `clustering` | **Local clustering coefficient**: the fraction of a node's pairs of neighbours that are themselves connected. Measures how tightly knit the local neighbourhood is. |
+| `transitivity` | **Global transitivity (network-level)**: ratio of closed triangles to all connected triples in the graph. A single graph-level scalar assigned identically to every node in the output. |
+| `eccentricity` | **Eccentricity**: the maximum shortest-path distance from a node to any other reachable node. The minimum eccentricity across all nodes is the graph *radius*; the maximum is the graph *diameter*. |
+| `eigenval` | **Eigenvalue centrality score**: the dominant eigenvalue of the adjacency matrix, reported as a constant for the graph. Companion to `eigenvec`. |
+| `eigenvec` | **Eigenvector centrality**: each node's component in the principal eigenvector of the adjacency matrix. A node scores high if it is connected to other high-scoring nodes. |
+| `katz` | **Katz centrality**: a damped version of eigenvector centrality that also credits nodes for *all* paths (not just shortest), with longer paths discounted by an attenuation factor $\alpha$ (default $\alpha = 0.1/\lambda_{\max}$). |
+| `pagerank` | **PageRank**: the stationary distribution of a random walker who follows edges with probability $(1-d)$ and teleports with probability $d$ (damping factor, default 0.85). Widely used to rank nodes in directed graphs. |
+| `hits` | **HITS (Hyperlink-Induced Topic Search)**: computes two scores per node: *hub* (a good hub points to good authorities) and *authority* (a good authority is pointed to by good hubs). Both scores are stored as separate variables. |
 
 All measures except `transitivity` and `eigenval` produce a per-node variable. When `weighted` is specified, path-based measures (betweenness, closeness, harmonic, eccentricity) use edge weights as distances, and spectral measures (eigenvec, katz, pagerank, hits) use the weighted adjacency matrix.
 
@@ -42,9 +42,9 @@ The node positions used for drawing are determined by `layout(name)`. The defaul
 
 | Layout | Description |
 |---|---|
-| `fr` | **Fruchterman–Reingold** (default) — a force-directed algorithm that treats edges as springs and nodes as repelling charges. Produces organic, aesthetically pleasing layouts for general networks. Randomised; use `seed()` for reproducibility. |
-| `kk` | **Kamada–Kawai** — a stress-minimisation layout that positions nodes so that their graph-theoretic distances match their Euclidean distances as closely as possible. Well-suited to smaller, dense graphs. |
-| `spectral` | **Spectral layout** — uses the eigenvectors of the graph Laplacian to embed nodes into two dimensions. Tends to reflect community structure and produce symmetric layouts. |
+| `fr` | **Fruchterman–Reingold** (default): a force-directed algorithm that treats edges as springs and nodes as repelling charges. Produces organic, aesthetically pleasing layouts for general networks. Randomised; use `seed()` for reproducibility. |
+| `kk` | **Kamada–Kawai**: a stress-minimisation layout that positions nodes so that their graph-theoretic distances match their Euclidean distances as closely as possible. Well-suited to smaller, dense graphs. |
+| `spectral` | **Spectral layout**: uses the eigenvectors of the graph Laplacian to embed nodes into two dimensions. Tends to reflect community structure and produce symmetric layouts. |
 | `star` | Places one node at the centre and distributes all remaining nodes evenly around a single circle. Useful for hub-and-spoke topologies. |
 | `sphere` | Distributes all nodes uniformly on a circle (spherical shell in 2D); helpful for highlighting cross-network connections. |
 | `grid` | Arranges nodes on a regular rectangular grid. No topological information is encoded; best used when node labels matter more than positions. |
