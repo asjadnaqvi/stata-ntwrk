@@ -74,15 +74,11 @@ Required packages:
 ```stata
 ssc install palettes, replace
 ssc install colrspace, replace
-```
-
-Optional package (used with `arc` option):
-
-```stata
 ssc install graphfunctions, replace
 ```
 
-If these are already installed, check for updates:
+
+If these are already installed, then also please periodically check for updates:
 
 ```stata
 ado update, update
@@ -134,7 +130,6 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 ### Cleaner Fruchterman-Reingold layout
 
 ```stata
-
 ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 	measure(degree between) mvar(degree) ///
 	layout(fr) seed(1234) novalues ///
@@ -166,16 +161,16 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 
 | Layout | No arc | Arc |
 |---|---|---|
-| Fruchterman-Reingold | ![Fruchterman-Reingold layout](/figures/ntwrk_06_layout_fr.png) | ![Fruchterman-Reingold arc layout](/figures/ntwrk_06_layout_fr_arc.png) |
-| Kamada-Kawai | ![Kamada-Kawai layout](/figures/ntwrk_06_layout_kk.png) | ![Kamada-Kawai arc layout](/figures/ntwrk_06_layout_kk_arc.png) |
-| Spectral | ![Spectral layout](/figures/ntwrk_06_layout_spectral.png) | ![Spectral arc layout](/figures/ntwrk_06_layout_spectral_arc.png) |
-| Star | ![Star layout](/figures/ntwrk_06_layout_star.png) | ![Star arc layout](/figures/ntwrk_06_layout_star_arc.png) |
-| Sphere | ![Sphere layout](/figures/ntwrk_06_layout_sphere.png) | ![Sphere arc layout](/figures/ntwrk_06_layout_sphere_arc.png) |
-| Grid | ![Grid layout](/figures/ntwrk_06_layout_grid.png) | ![Grid arc layout](/figures/ntwrk_06_layout_grid_arc.png) |
-| Random | ![Random layout](/figures/ntwrk_06_layout_random.png) | ![Random arc layout](/figures/ntwrk_06_layout_random_arc.png) |
-| Bipartite | ![Bipartite layout](/figures/ntwrk_06_layout_bipartite.png) | ![Bipartite arc layout](/figures/ntwrk_06_layout_bipartite_arc.png) |
-| Shell | ![Shell layout](/figures/ntwrk_06_layout_shell.png) | ![Shell arc layout](/figures/ntwrk_06_layout_shell_arc.png) |
-| Spiral | ![Spiral layout](/figures/ntwrk_06_layout_spiral.png) | ![Spiral arc layout](/figures/ntwrk_06_layout_spiral_arc.png) |
+| Fruchterman-Reingold `layout(fr)` | ![Fruchterman-Reingold layout](/figures/ntwrk_06_layout_fr.png) | ![Fruchterman-Reingold arc layout](/figures/ntwrk_06_layout_fr_arc.png) |
+| Kamada-Kawai `layout(kk)` | ![Kamada-Kawai layout](/figures/ntwrk_06_layout_kk.png) | ![Kamada-Kawai arc layout](/figures/ntwrk_06_layout_kk_arc.png) |
+| Spectral `layout(spectral)` | ![Spectral layout](/figures/ntwrk_06_layout_spectral.png) | ![Spectral arc layout](/figures/ntwrk_06_layout_spectral_arc.png) |
+| Star `layout(star)` | ![Star layout](/figures/ntwrk_06_layout_star.png) | ![Star arc layout](/figures/ntwrk_06_layout_star_arc.png) |
+| Sphere `layout(sphere)` | ![Sphere layout](/figures/ntwrk_06_layout_sphere.png) | ![Sphere arc layout](/figures/ntwrk_06_layout_sphere_arc.png) |
+| Grid `layout(grid)` | ![Grid layout](/figures/ntwrk_06_layout_grid.png) | ![Grid arc layout](/figures/ntwrk_06_layout_grid_arc.png) |
+| Random `layout(random)` | ![Random layout](/figures/ntwrk_06_layout_random.png) | ![Random arc layout](/figures/ntwrk_06_layout_random_arc.png) |
+| Bipartite `layout(bipartite)` | ![Bipartite layout](/figures/ntwrk_06_layout_bipartite.png) | ![Bipartite arc layout](/figures/ntwrk_06_layout_bipartite_arc.png) |
+| Shell `layout(shell)` | ![Shell layout](/figures/ntwrk_06_layout_shell.png) | ![Shell arc layout](/figures/ntwrk_06_layout_shell_arc.png) |
+| Spiral `layout(spiral)` | ![Spiral layout](/figures/ntwrk_06_layout_spiral.png) | ![Spiral arc layout](/figures/ntwrk_06_layout_spiral_arc.png) |
 
 ### 4. Styling showcase
 
