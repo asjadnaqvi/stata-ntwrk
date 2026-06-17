@@ -1,8 +1,11 @@
 ![StataMin](https://img.shields.io/badge/stata-2015-blue) ![issues](https://img.shields.io/github/issues/asjadnaqvi/stata-ntwrk) ![license](https://img.shields.io/github/license/asjadnaqvi/stata-ntwrk) ![Stars](https://img.shields.io/github/stars/asjadnaqvi/stata-ntwrk) ![version](https://img.shields.io/github/v/release/asjadnaqvi/stata-ntwrk) ![release](https://img.shields.io/github/release-date/asjadnaqvi/stata-ntwrk)
 
 [Installation](#Installation) | [Syntax](#Syntax) | [Examples](#Examples) | [Feedback](#Feedback) | [Change log](#Change-log)
-
 ---
+
+<img width="100%" alt="ntwrk_banner" src="https://github.com/user-attachments/assets/6643f77e-0912-475a-9689-9af35140695b" />
+
+
 
 # ntwrk v1.0 (beta)
 (17 Jun 2026)
