@@ -1,7 +1,8 @@
 *! ntwrk v1.0 (beta)
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
-* v1.0  (02 Jun 2026): first release (beta)
+* v1.0  (17 Jun 2026): first release (beta)
+
 
 cap prog drop ntwrk
 
@@ -9,15 +10,19 @@ prog def ntwrk, sortpreserve
 
 	version 15
 	
-	syntax varlist(min = 3 max = 3) [if] [in] ,  	 												///     // from, to, value
-		[ between indegree outdegree closeness harmonic clustering transitivity eccentricity eigenval eigenvec katz pagerank hits	] 	///  	// node measures
+	local __raw_cmdline `"`0'"'
+	
+		syntax varlist(max = 1 numeric) [if] [in], from(string) to(string)   	 												///     // from, to, value
+			[ Measure(string) weighted directedclustering KATZALpha(real 0.1) ] 	///  	// node measures
 		[ ITERations(real 100) TOLerance(real 1e-6) radius(real 5) ]   										///		// common parameters
 		[ ARROWSize(string) ]													///		// arrow size
 		[ layout(string) seed(numlist max=1 >=0) width(real 150) height(real 150) 	] 			///		// draw the graphs
-		[ LQUANTile(numlist max=1 >=3) LWidth(real 1) LAlpha(real 80) reduce(real 0) LSCALE LSCALEFACtor(real 0.3333) ] 		///		// link options
+		[ LQUANTile(numlist max=1 >=3) LWidth(string) LLABSize(string) LAlpha(real 80) reduce(real 0) lscale LSCALEFACtor(real 0.3333) lprop LPROPFACtor(real 0.3333) ] 		///		// link options
 		[ arc arcn(real 40) ARCRADius(numlist max=1 >0) ] 									///		// arc options
-		[ MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MAlpha(real 80) MSYMbol(string) MSCALE  MSCALEFACtor(real 0.3333) 	]			///		// node options
-		[ savedata saveprefix(string) NOGRaph lpalette(string) mpalette(string) NOVALues ]      // saving options
+		[ MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MLABSize(string) malpha(real 80) mlalpha(real 100) MSYMbol(string) mscale  MSCALEFACtor(real 0.3333) MLColor(string) MLWIDth(string) mprop MPROPFACtor(real 0.3333) ]			///		// node options
+		[ save replace saveprefix(string) nograph lpalette(string) mpalette(string) NOVALues format(string) * ]      // saving options
+
+	local __has_nograph = regexm(lower(`"`__raw_cmdline'"'), "(^|,|[ \t])nograph([ \t]|$)")
 
 		
 	// check dependencies
@@ -35,12 +40,13 @@ prog def ntwrk, sortpreserve
 		}
 	}		
 	
-	if !inlist("`layout'", "", "star", "fr", "sphere", "grid", "random", "spectral", "kk", "bipartite") {
-		di as error "Valid options for {opt layout()} are {it:star}, {it:fr}, {it:sphere}, {it:grid}, {it:random}, {it:spectral}, {it:kk}, or {it:bipartite}."
+	local valid_layouts "star fr sphere grid random spectral kk bipartite shell spiral"
+	if "`layout'" != "" & !regexm(" `valid_layouts' ", " `layout' ") {
+		di as error "Valid options for {opt layout()} are {it:star}, {it:fr}, {it:sphere}, {it:grid}, {it:random}, {it:spectral}, {it:kk}, {it:bipartite}, {it:shell}, or {it:spiral}."
 		exit
 	}
 
-	if "`lquantile'" == "" local lquantile 10
+	if "`lquantile'" == "" local lquantile 5
 	local lcats = `lquantile'
 
 	if `lcats' < 3 {
@@ -48,7 +54,7 @@ prog def ntwrk, sortpreserve
 		exit 198
 	}
 
-	if "`mquantile'" == "" local mquantile 10
+	if "`mquantile'" == "" local mquantile 5
 	local mcats = `mquantile'
 
 	if `mcats' < 3 {
@@ -61,37 +67,94 @@ prog def ntwrk, sortpreserve
 		exit 198
 	}
 
-	if "`arrowsize'" == "" local arrowsize 1.2
+	if "`arrowsize'" 	== "" local arrowsize 1.2
+	if "`llabsize'" 	== "" local llabsize 1.2
+	if "`lwidth'" 		== "" local lwidth 0.5	
 
-	if "`msize'" == "" local msize 5
+	if "`msize'" 		== "" local msize 5
+	if "`mlabsize'" 	== "" local mlabsize 1.6
+	if "`mlwidth'" 		== "" local mlwidth 0.08
+
+		
 	capture confirm number `msize'
 	if _rc {
 		di as error "{opt msize()} must be numeric."
 		exit 198
 	}
 
-	if "`savedata'" != "" & "`saveprefix'" == "" {
+	if "`save'" != "" & "`saveprefix'" == "" {
 		local saveprefix "_network"
 		noi di in yellow "Note: {opt saveprefix()} not specified. Using default: {it:`saveprefix'}"
+	}
+
+	if "`katzalpha'" != "" {
+		if `katzalpha' <= 0 {
+			di as error "{opt katzalpha()} must be greater than 0."
+			exit 198
+		}
+	}
+
+	local valid_measures "degree between indegree outdegree closeness harmonic clustering transitivity eccentricity eigenval eigenvec katz pagerank hits core reciprocity ancestors descendants"
+	local measure_list = lower(strtrim("`measure'"))
+	local measure_list : subinstr local measure_list "," " ", all
+	local measure_list : list retok measure_list
+
+	if "`measure_list'" == "" {
+		foreach _m in between indegree outdegree closeness harmonic clustering transitivity eccentricity eigenval eigenvec katz pagerank hits core reciprocity ancestors descendants {
+			if "``_m''" != "" {
+				local measure_list "`measure_list' `_m'"
+			}
+		}
+		if "`measure_list'" == "" {
+			local measure_list "degree"
+		}
+		else {
+			local measure_list "degree `measure_list'"
+		}
+	}
+
+	local invalid_measures ""
+	local measure_clean ""
+	foreach _m of local measure_list {
+		if !regexm(" `valid_measures' ", " `_m' ") {
+			local invalid_measures "`invalid_measures' `_m'"
+		}
+		else if !regexm(" `measure_clean' ", " `_m' ") {
+			local measure_clean "`measure_clean' `_m'"
+		}
+	}
+
+	if "`invalid_measures'" != "" {
+		di as error "Invalid name(s) in {opt measure()}:`invalid_measures'"
+		di as error "Valid measure options are: `valid_measures'"
+		exit 198
+	}
+
+	local measure_list : list retok measure_clean
+
+	foreach _m in degree between indegree outdegree closeness harmonic clustering transitivity eccentricity eigenval eigenvec katz pagerank hits core reciprocity ancestors descendants {
+		local use_`_m' = regexm(" `measure_list' ", " `_m' ")
+	}
+
+	local node_metric "degree"
+	if !`use_degree' {
+		local node_metric : word 1 of `measure_list'
+		if "`node_metric'" == "transitivity" local node_metric "transit"
+		if "`node_metric'" == "eccentricity" local node_metric "eccentric"
+		if "`node_metric'" == "hits" local node_metric "hub"
 	}
 		
 		
 	marksample touse, strok	
 	
-	
-	tokenize "`varlist'"
-	
-	local f `1'  // from
-	local t `2'  // to 
-	local v `3'  // value
-	
-	
-	
+	local f `from'  // from
+	local t `to'  // to 
+	local v `varlist'  // value
+
 	
 preserve
 	qui {	
-	// store original information in a copy
-	
+		// store original information in a copy
 		if "`seed'" != "" set seed `seed'
 		
 		tempfile _network_copy _node_map
@@ -99,38 +162,37 @@ preserve
 		collapse (sum) `v', by(`f' `t')  // ensure uniqueness
 		compress
 		save `_network_copy'
-	
-		
-		
-	// map all node identifiers to contiguous numeric IDs
-	// this handles mixed string/numeric inputs and non-contiguous numeric IDs
-	use `_network_copy', clear
+
+
+		use `_network_copy', clear
 
 	tempvar _fstr _tstr _key
 	capture confirm string variable `f'
 	if !_rc {
-		qui count if !missing(`f') & strlen(`f') > 2045
-		if r(N) > 0 {
-			di as error "Source node IDs in `f' exceed 2045 characters; merge keys cannot be strL."
-			exit 198
-		}
-		gen str2045 `_fstr' = `f'
+		local _fstr `f'
 	}
 	else {
-		tostring `f', gen(`_fstr') usedisplayformat force
+		local __f_vallab : value label `f'
+		if "`__f_vallab'" != "" {
+			decode `f', gen(`_fstr')
+		}
+		else {
+			tostring `f', gen(`_fstr') usedisplayformat force
+		}
 	}
 
 	capture confirm string variable `t'
 	if !_rc {
-		qui count if !missing(`t') & strlen(`t') > 2045
-		if r(N) > 0 {
-			di as error "Target node IDs in `t' exceed 2045 characters; merge keys cannot be strL."
-			exit 198
-		}
-		gen str2045 `_tstr' = `t'
+		local _tstr `t'	
 	}
 	else {
-		tostring `t', gen(`_tstr') usedisplayformat force
+		local __t_vallab : value label `t'
+		if "`__t_vallab'" != "" {
+			decode `t', gen(`_tstr')
+		}
+		else {
+			tostring `t', gen(`_tstr') usedisplayformat force
+		}
 	}
 
 	keep `_fstr' `_tstr'
@@ -150,10 +212,16 @@ preserve
 	use `_network_copy', clear
 	capture confirm string variable `f'
 	if !_rc {
-		gen str2045 `_key' = `f'
+		gen str `_key' = `f'
 	}
 	else {
-		tostring `f', gen(`_key') usedisplayformat force
+		local __f_vallab : value label `f'
+		if "`__f_vallab'" != "" {
+			decode `f', gen(`_key')
+		}
+		else {
+			tostring `f', gen(`_key') usedisplayformat force
+		}
 	}
 	ren `_key' _label
 	merge m:1 _label using `_node_map'
@@ -163,10 +231,16 @@ preserve
 
 	capture confirm string variable `t'
 	if !_rc {
-		gen str2045 `_key' = `t'
+		gen str `_key' = `t'
 	}
 	else {
-		tostring `t', gen(`_key') usedisplayformat force
+		local __t_vallab : value label `t'
+		if "`__t_vallab'" != "" {
+			decode `t', gen(`_key')
+		}
+		else {
+			tostring `t', gen(`_key') usedisplayformat force
+		}
 	}
 	ren `_key' _label
 	merge m:1 _label using `_node_map'
@@ -184,70 +258,107 @@ preserve
 	// noi di "Check 2"
 
 	****** pass to Mata
-	mata: points = st_data(., ("`varlist'")); square = square(points); binary = binary(square)
+	mata: points = st_data(., (" `from' `to' `varlist'")); square = square(points); binary = binary(square); cost = edgecost(square)
 	
-	
+
 	// prepare a matrix for storing results
 	mata: exports = J(rows(binary), 0, .); mylist = ""
 	
 	
-	// degree is always returned
-		mata: degree     = degree(binary)
-		mata: exports 	= exports , degree
-		mata: mylist = mylist + " degree"
-		mata: st_local("header", mylist)
+	// always compute degree; include it in output only when requested
+		if "`weighted'" == "" {
+			mata: degree     = degree(binary)
+		}
+		else {
+			mata: degree     = degree(square)
+		}
+		if `use_degree' {
+			mata: exports 	= exports , degree
+			mata: mylist = mylist + " degree"
+			mata: st_local("header", mylist)
+		}
+		
 	
 	
-	
-	if "`between'"   != "" {
-		mata: between    = betweenness(binary, square, 0)
+	if `use_between' {
+		if "`weighted'" == "" {
+			mata: between    = betweenness(binary, square, 0)
+		}
+		else {
+			mata: between    = betweenness(binary, cost, 1)
+		}
 		mata: exports 	= exports , between
 		mata: mylist = mylist + " between"
 		mata: st_local("header", mylist)
 	}
 
 	
-	if "`indegree'"  != "" {
-		mata: indegree   = indegree(binary)
+	if `use_indegree' {
+		if "`weighted'" == "" {
+			mata: indegree   = indegree(binary)
+		}
+		else {
+			mata: indegree   = indegree(square)
+		}
 		mata: exports 	= exports , indegree
 		mata: mylist = mylist + " indegree"
 		mata: st_local("header", mylist)		
 	}	
 	
 
-	if "`outdegree'" != "" {
-		mata: outdegree  = outdegree(binary)
+	if `use_outdegree' {
+		if "`weighted'" == "" {
+			mata: outdegree  = outdegree(binary)
+		}
+		else {
+			mata: outdegree  = outdegree(square)
+		}
 		mata: exports 	= exports , outdegree
 		mata: mylist = mylist + " outdegree"
 		mata: st_local("header", mylist)		
 	}	
 	
 
-	if "`closeness'" != "" {
-		mata: closeness  = closeness_centrality(binary)
+	if `use_closeness' {
+		if "`weighted'" == "" {
+			mata: closeness  = closeness_centrality(binary)
+		}
+		else {
+			mata: closeness  = closeness_centrality_w(binary, cost)
+		}
 		mata: exports 	= exports , closeness
 		mata: mylist = mylist + " closeness"
 		mata: st_local("header", mylist)			
 	}
 
 	
-	if "`harmonic'" != "" {
-		mata: harmonic   = harmonic_centrality(binary)
+	if `use_harmonic' {
+		if "`weighted'" == "" {
+			mata: harmonic   = harmonic_centrality(binary)
+		}
+		else {
+			mata: harmonic   = harmonic_centrality_w(binary, cost)
+		}
 		mata: exports 	= exports , harmonic
 		mata: mylist = mylist + " harmonic"
 		mata: st_local("header", mylist)			
 	}
 
 	
-	if "`clustering'" != "" {
-		mata: clustering = clustering_coefficient(binary)
+	if `use_clustering' {
+		if "`directedclustering'" == "" {
+			mata: clustering = clustering_coefficient(binary)
+		}
+		else {
+			mata: clustering = clustering_coefficient_directed(binary)
+		}
 		mata: exports 	= exports , clustering
 		mata: mylist = mylist + " clustering"
 		mata: st_local("header", mylist)			
 	}
 
 	
-	if "`transitivity'" != "" {
+	if `use_transitivity' {
 		mata: transit    = transitivity(binary)
 		mata: exports 	= exports , J(rows(binary), 1, transit)
 		mata: mylist = mylist + " transitivity"
@@ -255,51 +366,115 @@ preserve
 	}
 
 	
-	if "`eccentricity'" != "" {
-		mata: eccentric  = eccentricity(binary)
+	if `use_eccentricity' {
+		if "`weighted'" == "" {
+			mata: eccentric  = eccentricity(binary)
+		}
+		else {
+			mata: eccentric  = eccentricity_w(binary, cost)
+		}
 		mata: exports 	= exports , eccentric
 		mata: mylist = mylist + " eccentricity"
 		mata: st_local("header", mylist)			
 	}
 
 	
-	if "`eigenval'"  != "" {
-		mata: eigenval   = eigenvalue_centrality(binary, `iterations', `tolerance')
+	if `use_eigenval' {
+		if "`weighted'" == "" {
+			mata: eigenval   = eigenvalue_centrality(binary, `iterations', `tolerance')
+		}
+		else {
+			mata: eigenval   = eigenvalue_centrality(square, `iterations', `tolerance')
+		}
 		mata: exports 	= exports , eigenval
 		mata: mylist = mylist + " eigenval"
 		mata: st_local("header", mylist)			
 	}	
 		
 		
-	if "`eigenvec'"  != "" {
-		mata: eigenvec  = eigenvectorcent(binary)
+	if `use_eigenvec' {
+		if "`weighted'" == "" {
+			mata: eigenvec  = eigenvectorcent(binary)
+		}
+		else {
+			mata: eigenvec  = eigenvectorcent(square)
+		}
 		mata: exports 	= exports , eigenvec
 		mata: mylist    = mylist + " eigenvec"
 		mata: st_local("header", mylist)			
 	}
 	
 		
-	if "`katz'" 	 != "" {
-		mata: katz  	= katz_centrality(binary, 0.1, 1)
+	if `use_katz' {
+		if "`katzalpha'" == "" {
+			mata: katz_alpha = 0.1
+		}
+		else {
+			mata: katz_alpha = `katzalpha'
+		}
+		if "`weighted'" == "" {
+			mata: katz  	= katz_centrality(binary, katz_alpha, 1)
+		}
+		else {
+			mata: katz  	= katz_centrality(square, katz_alpha, 1)
+		}
 		mata: exports   = exports , katz
 		mata: mylist    = mylist + " katz"
 		mata: st_local("header", mylist)		
 	}
 	
 	
-	if "`pagerank'"  != "" {
-		mata: pagerank  = pagerank(binary, 0.85, `iterations', `tolerance')
+	if `use_pagerank' {
+		if "`weighted'" == "" {
+			mata: pagerank  = pagerank(binary, 0.85, `iterations', `tolerance')
+		}
+		else {
+			mata: pagerank  = pagerank(square, 0.85, `iterations', `tolerance')
+		}
 		mata: exports 	= exports , pagerank
 		mata: mylist    = mylist + " pagerank"
 		mata: st_local("header", mylist)			
 	}
 
 	
-	if "`hits'"  	 != "" {
-		mata: hits(binary, `iterations', `tolerance', hub=., authority=.)
+	if `use_hits' {
+		if "`weighted'" == "" {
+			mata: hits(binary, `iterations', `tolerance', hub=., authority=.)
+		}
+		else {
+			mata: hits(square, `iterations', `tolerance', hub=., authority=.)
+		}
 		mata: exports 	= exports , hub, authority
 		mata: mylist = mylist + " hub authority"
 		mata: st_local("header", mylist)		
+	}
+
+	if `use_core' {
+		mata: core = core_number_undirected(binary)
+		mata: exports = exports , core
+		mata: mylist = mylist + " core"
+		mata: st_local("header", mylist)
+	}
+
+	if `use_reciprocity' {
+		mata: reciprocity = reciprocity_node(binary)
+		mata: exports = exports , reciprocity
+		mata: mylist = mylist + " reciprocity"
+		mata: st_local("header", mylist)
+	}
+
+	if `use_descendants' {
+		mata: descendants = descendants_count(binary)
+		mata: exports = exports , descendants
+		mata: mylist = mylist + " descendants"
+		mata: st_local("header", mylist)
+	}
+
+	if `use_ancestors' {
+		mata: ancestors = ancestors_count(binary)
+		mata: exports = exports , ancestors
+		mata: mylist = mylist + " ancestors"
+		mata: st_local("header", mylist)
 	}
 
 
@@ -308,10 +483,8 @@ preserve
 	*****************************
 	*****      layouts		*****
 	*****************************
-
 	
 	tempfile _layout_nodes
-	
 	
 	drop `v'
 	duplicates drop `f' `t', force  // reduce 1
@@ -325,9 +498,11 @@ preserve
 	cap drop id node
 	sort _id
 	
+	if "`layout'" == "" & !`__has_nograph' {
+		noi di in yellow "Note: {opt layout()} not specified. Using {opt layout(fr)}."
+	}
 	
-	
-	if "`layout'" == "star" | "`layout'"== "" {
+	if "`layout'" == "star"  {
 		gen double angle = (_n * 2 * -_pi / _N)
 		gen double _x = `radius' * cos(angle)
 		gen double _y = `radius' * sin(angle)
@@ -335,7 +510,7 @@ preserve
 	}
 	
 	
-	if "`layout'" == "fr" {
+	if "`layout'" == "fr" | "`layout'"== "" {
 		mata: positions = fr_layout(binary, `iterations', `width', `height')
 		mata: st_matrix("positions", positions)
 		mat colnames positions = "_check" "_x" "_y"
@@ -391,13 +566,28 @@ preserve
 		svmat bippos, n(col)
 	}
 
+	if "`layout'" == "shell" {
+		mata: shellpos = shell_layout(binary, `width', `height')
+		mata: st_matrix("shellpos", shellpos)
+		mat colnames shellpos = "_check" "_x" "_y"
+		svmat shellpos, n(col)
+	}
+
+
+	if "`layout'" == "spiral" {
+		mata: spirpos = spiral_layout(binary, `width', `height')
+		mata: st_matrix("spirpos", spirpos)
+		mat colnames spirpos = "_check" "_x" "_y"
+		svmat spirpos, n(col)
+	}
+
 	// rescale all layouts to a common coordinate frame
 	quietly summarize _x, meanonly
-	local xmin = r(min)
-	local xmax = r(max)
+		local xmin = r(min)
+		local xmax = r(max)
 	quietly summarize _y, meanonly
-	local ymin = r(min)
-	local ymax = r(max)
+		local ymin = r(min)
+		local ymax = r(max)
 
 	local xspan = `xmax' - `xmin'
 	local yspan = `ymax' - `ymin'
@@ -406,27 +596,22 @@ preserve
 	local xmid = (`xmax' + `xmin') / 2
 	local ymid = (`ymax' + `ymin') / 2
 
-	if (`span' > 0) replace _x = ((_x - `xmid') / `span') * `width'  + (`width' / 2)
-	if (`span' > 0) replace _y = ((_y - `ymid') / `span') * `height' + (`height' / 2)
-	if (`span' <= 0) replace _x = `width' / 2
-	if (`span' <= 0) replace _y = `height' / 2
-
+	replace _x = ((_x - `xmid') / `span') * `width'  + (`width' / 2)	if (`span' > 0) 
+	replace _y = ((_y - `ymid') / `span') * `height' + (`height' / 2)	if (`span' > 0) 
+	replace _x = `width' / 2											if (`span' <= 0) 
+	replace _y = `height' / 2											if (`span' <= 0) 
 
 	keep _id _x _y
 	merge 1:1 _id using `_node_map'
 	keep if _m==3
 	drop _m
 	
-
 	sort _id	
 	compress
 
 	save `_layout_nodes'
 	
-	
-	
-	// noi di "Check 4"
-	
+
 	*******************************
 	*** get the links in order  ***
 	*******************************
@@ -462,24 +647,12 @@ preserve
 	// reduce the length of the links by  r    
 	
 	
-	
 	tempvar dx dy p1x p1y p2x p2y L rate
 	gen double `p1x' = _fx
 	gen double `p1y' = _fy
 	
 	gen double `p2x' = _tx
 	gen double `p2y' = _ty
-	
-	
-	// reduce by x% points
-	/*
-	local r2 = ((100 - `reduce') / 100) / 2
-	
-	replace _fx = ((1 - `r2') * `p2x') + (`r2' * `p1x')
-	replace _fy = ((1 - `r2') * `p2y') + (`r2' * `p1y')
-	replace _tx = ((1 - `r2') * `p1x') + (`r2' * `p2x')
-	replace _ty = ((1 - `r2') * `p1y') + (`r2' * `p2y')	
-	*/
 	
 	
 	// reduce by a fixed length
@@ -504,6 +677,7 @@ preserve
 	gen double _midx = _fx + 0.5 * (_tx - _fx) 
 	gen double _midy = _fy + 0.5 * (_ty - _fy) 
 	
+	sort `f' `t'
 	save `_network_copy', replace
 	*save _temp.dta, replace
 	
@@ -512,12 +686,12 @@ preserve
 	// add the nodes with attributes 
 	
 	// add node attributes back to Stata
-		use `_layout_nodes', clear
-		mata st_matrix("exports", exports)
-		mat colnames exports = `header'
-		svmat exports, n(col)
-		
-		save `_layout_nodes', replace
+	use `_layout_nodes', clear
+	mata st_matrix("exports", exports)
+	mat colnames exports = `header'
+	svmat exports, n(col)
+	
+	save `_layout_nodes', replace
 		
 
 	
@@ -532,15 +706,67 @@ preserve
 	lab de _control 0 "Links" 1 "Nodes"
 	lab val _control _control
 	
+	local workfile  ""
+
+	if "`save'" != "" {
+		compress 
+		cap drop _check
+		
+		cap label var _control "Type (0=Link, 1=Node)"
+		cap label var _id "Node ID"
+		cap label var _x "Node: X Coordinate"
+		cap label var _y "Node: Y Coordinate"
+		cap label var _label "Node Label"
+		cap label var _ownflow "Link: =1 if from==to (self-loop)"
+
+		cap label var _midx "Link Midpoint X Coordinate"
+		cap label var _midy "Link Midpoint Y Coordinate"
+
+		cap label var _lid "Link ID"
+		cap label var _fx "Link: From Node X Coordinate"
+		cap label var _fy "Link: From Node Y Coordinate"
+		cap label var _tx "Link: To Node X Coordinate"
+		cap label var _ty "Link: To Node Y Coordinate"
+
+		cap label var degree "Degree Centrality"
+		cap label var between "Betweenness Centrality"
+		cap label var indegree "Indegree Centrality"
+		cap label var outdegree "Outdegree Centrality"
+		cap label var closeness "Closeness Centrality"
+		cap label var harmonic "Harmonic Centrality"
+		cap label var clustering "Clustering Coefficient"
+		cap label var transit "Transitivity"
+		cap label var eccentric "Eccentricity"
+		cap label var eigenval "Eigenvalue Centrality"
+		cap label var eigenvec "Eigenvector Centrality"
+		cap label var katz "Katz Centrality"
+		cap label var pagerank "PageRank"
+		cap label var hub "HITS Hub Score"
+		cap label var authority "HITS Authority Score"
+		cap label var core "Core Number (Undirected)"
+		cap label var reciprocity "Node Reciprocity"
+		cap label var descendants "Descendants Count"
+		cap label var ancestors "Ancestors Count"		
+
+		order _control
+		save "`saveprefix'.dta", `replace'
+		noi di in yellow "File `saveprefix'.dta sucessfully exported."
+
+		local workfile "`saveprefix'.dta"
+	}
+
 
 	************
 	*** plot ***
 	************
 
 	
-	if "`nograph'" == "" {
-		
-		***** weight the links
+	if !`__has_nograph' {
+
+		if "`format'" == "" local format "%9.2f"
+		format `v' `format'
+
+		***** weighted the links
 		qui count if _control==0 & !missing(`v')
 		local lobs = r(N)
 		local lcats_eff = `lcats'
@@ -574,7 +800,7 @@ preserve
 		// marker palette controls //
 		/////////////////////////////
 
-		***** weight the nodes
+		***** weighted the nodes
 		if "`mvar'" != "" {
 			cap confirm variable `mvar'
 			if _rc {
@@ -593,8 +819,8 @@ preserve
 			replace mquant = 1 if _control==1 & missing(mquant)
 		}
 		else {
-			// Default node color mapping: use degree if mvar() is not specified.
-			qui count if _control==1 & !missing(degree)
+			// Default node color mapping: use the selected node metric.
+			qui count if _control==1 & !missing(`node_metric')
 			local mobs = r(N)
 			local mcats_eff = `mcats'
 			if `mobs' > 0 {
@@ -602,16 +828,21 @@ preserve
 			}
 			if `mcats_eff' < 1 local mcats_eff = 1
 
-			noi di in yellow "Note: {opt mvar()} not specified. Using {ul:degree} centrality for node size."	
+			if !`__has_nograph' & "`mvar'" == "" & ("`mprop'" != "" | "`mscale'" != "") {
+				noi di in yellow "Note: {opt mvar()} not specified. Using {opt mvar(degree)} for node size."
+			}	
 
-			xtile mquant = degree if _control==1, n(`mcats_eff')
+			xtile mquant = `node_metric' if _control==1, n(`mcats_eff')
 			replace mquant = 1 if _control==1 & missing(mquant)
 
 		}
 
-
 		if "`mpalette'" == "" {
-			local mpalette gs10
+			local mpalette cividis
+		}
+
+		if "`mprop'" == "" {
+			local mpalette gs13
 		}
 		else {
 			tokenize "`mpalette'", p(",")
@@ -626,10 +857,9 @@ preserve
 			local mclr`i' "`r(p`j')'"
 		}
 
-
 		
-		// Calculate and store node circle radii (degree-weighted)
-		summ degree if _control==1, meanonly
+		// Calculate and store node circle radii (quantile-weighted by the selected node metric)
+		summ `node_metric' if _control==1, meanonly
 		local degmax = cond(r(max) > 0, r(max), 1)
 		
 		gen double _node_radius = .
@@ -638,20 +868,20 @@ preserve
 		gen int _circquant = .
 
 		levelsof _id if _control==1, local(lvls)
-		local items = r(r)
+		local items = `mcats_eff'
+		if `items' < 1 local items = 1
 
 		foreach x of local lvls {
-			summ degree if _id==`x' & _control==1, meanonly
+			summ mquant if _id==`x' & _control==1, meanonly
+			local mq = cond(r(N)==0 | missing(r(mean)), 1, r(mean))
+
 			if "`mscale'" != "" {
-				local rad = `msize' * (`x' / `items')^`mscalefactor' 
+				local rad = `msize' * (`mq' / `items')^`mscalefactor' 
 			}
 			else {
 				local rad = `msize'
 			}
 			replace _node_radius = `rad' if _id==`x' & _control==1
-
-			summ mquant if _id==`x' & _control==1, meanonly
-			local mq = cond(r(N)==0 | missing(r(mean)), 1, r(mean))
 			
 			summ _x if _id==`x' & _control==1, meanonly
 			local _xmean = r(mean)
@@ -699,7 +929,13 @@ preserve
 		gen double _tx_edge = cond(_trim_ok, _tx - (_trad / _llen) * _ldx, (_fx + _tx) / 2) if _control==0
 		gen double _ty_edge = cond(_trim_ok, _ty - (_trad / _llen) * _ldy, (_fy + _ty) / 2) if _control==0
 		
-		// Initialize plot components
+
+		///////////
+		// Plot  //
+		///////////
+
+
+		
 		local arrowheads ""
 		local circles ""
 		
@@ -744,6 +980,7 @@ preserve
 
 				local ++arccount
 			}
+			format _arclabel `format'
 			
 		// Extract arrowhead coordinates from last two arc points
 		cap drop _arrow*
@@ -764,7 +1001,7 @@ preserve
 		replace _arclab_x = _arcx 		if _arcorder==`arclaborder'
 		replace _arclab_y = _arcy 		if _arcorder==`arclaborder'
 		
-		// build line plots for each weight category
+		// build line plots for each weighted category
 		levelsof lquant if _control==0, local(lvls)
 		local items = r(r)
 
@@ -781,7 +1018,7 @@ preserve
 		if "`novalues'" == "" {
 			levelsof lquant if _control==0, local(lvls)
 			foreach x of local lvls {
-				local linkdots `linkdots' (scatter _arclab_y _arclab_x if _arcsize==`x' & _arcorder==`arclaborder', msymbol(none) mlabpos(0) mcolor(none) mlab(_arclabel) mlabcolor(black))
+				local linkdots `linkdots' (scatter _arclab_y _arclab_x if _arcsize==`x' & _arcorder==`arclaborder', msymbol(none) mlabpos(0) mcolor(none) mlab(_arclabel) mlabsize(`llabsize') mlabcolor(black))
 			}
 		}
 		
@@ -807,7 +1044,7 @@ preserve
 				local arrows `arrows' (pcarrow _fy_edge _fx_edge _ty_edge _tx_edge if !_ownflow & lquant==`x' & _control==0, msize(`arrowsize') lw(`lwgt') lc("`lclr`x''%`lalpha'") mc("`lclr`x''%`lalpha'")  ) 
 				
 				if "`novalues'" == "" {
-					local linkdots `linkdots' (scatter _midy _midx if !_ownflow & lquant==`x' & _control==0, mlabpos(0) mcolor(none) mlab(`v') mlabcolor(black)  ) 
+					local linkdots `linkdots' (scatter _midy _midx if !_ownflow & lquant==`x' & _control==0, mlabpos(0) mcolor(none) mlab(`v') mlabsize(`llabsize') mlabcolor(black)  ) 
 				}
 			}
 		}
@@ -815,13 +1052,26 @@ preserve
 
 		// draw circles via area shapes (sized by degree), colored by node quantiles
 		forval x = 1/`mcats_eff' {
-			local circles `circles' (area _circy _circx if _circquant==`x', nodropbase cmissing(no) fi(100) fc("`mclr`x''%`malpha'") lc("`mclr`x''%`malpha'"))
+
+			if "`mlcolor'" != "" {
+				if regexm("`mlcolor'", "%[0-9]+$") {
+					local _mclr "`mlcolor'"
+				}
+				else {
+					local _mclr "`mlcolor'%`mlalpha'"
+				}
+			}
+			else {
+				local _mclr "`mclr`x''%`mlalpha'"
+			}
+
+			local circles `circles' (area _circy _circx if _circquant==`x', nodropbase cmissing(no) fi(100) fc("`mclr`x''%`malpha'") lc("`_mclr'") lw(`mlwidth'))
 		}
 
 		// weighted nodes
 
 		// labels only - circles drawn via area above
-		local dots (scatter _y _x if _control, msymbol(none) mlabpos(0) mlab(_label) mlabcolor(black))
+		local dots (scatter _y _x if _control, msymbol(none) mlabpos(0) mlab(_label) mlabsize(`mlabsize') mlabcolor(black))
 	
 	
 	
@@ -875,16 +1125,9 @@ preserve
 		legend(off) ///
 			xscale(off range(`range_str')) yscale(off range(`range_str'))	///
 			xlabel(, nogrid) ylabel(, nogrid) ///
-			aspect(1) xsize(1) ysize(1)
+			aspect(1) xsize(1) ysize(1) `options'
 	
-		if "`savedata'" != "" {
-			compress 
-			cap drop _check
-			
-			order _control
-			save "`saveprefix'.dta", replace
-			noi di in yellow "File `saveprefix'.dta sucessfully exported."
-		}
+
 	
 
 	}
@@ -892,6 +1135,84 @@ preserve
 	
 restore	
 	
+end
+
+
+**** Shell layout ****
+
+mata:
+
+real matrix shell_layout(real matrix A, real scalar width, real scalar height)
+{
+	real scalar N, i, n_inner, n_outer, cx, cy, r_inner, r_outer
+	real vector deg, order, inner_idx, outer_idx
+	real matrix pos
+
+	N = rows(A)
+	if (N == 1) return((1, width/2, height/2))
+
+	pos = J(N, 2, 0)
+	cx = width / 2
+	cy = height / 2
+
+	// Build two shells using undirected degree: top half inner, rest outer.
+	deg = rowsum(A :+ A')
+	order = order(-deg, 1)
+	n_inner = ceil(N / 2)
+	n_outer = N - n_inner
+
+	inner_idx = order[|1 \ n_inner|]
+	if (n_outer > 0) outer_idx = order[|n_inner + 1 \ N|]
+	else outer_idx = J(0, 1, .)
+
+	r_inner = 0.35 * min((width, height))
+	r_outer = 0.50 * min((width, height))
+
+	for (i = 1; i <= n_inner; i++) {
+		pos[inner_idx[i], 1] = cx + r_inner * cos(2 * pi() * (i - 1) / n_inner)
+		pos[inner_idx[i], 2] = cy + r_inner * sin(2 * pi() * (i - 1) / n_inner)
+	}
+
+	for (i = 1; i <= n_outer; i++) {
+		pos[outer_idx[i], 1] = cx + r_outer * cos(2 * pi() * (i - 1) / n_outer)
+		pos[outer_idx[i], 2] = cy + r_outer * sin(2 * pi() * (i - 1) / n_outer)
+	}
+
+	return((1::N), pos)
+}
+
+end
+
+
+
+**** Spiral layout ****
+
+mata:
+
+real matrix spiral_layout(real matrix A, real scalar width, real scalar height)
+{
+	real scalar N, i, cx, cy, tmax, t, rmax, r
+	real matrix pos
+
+	N = rows(A)
+	if (N == 1) return((1, width/2, height/2))
+
+	pos = J(N, 2, 0)
+	cx = width / 2
+	cy = height / 2
+	tmax = 4 * pi()
+	rmax = 0.5 * min((width, height))
+
+	for (i = 1; i <= N; i++) {
+		t = (i - 1) * tmax / (N - 1)
+		r = rmax * (i - 1) / (N - 1)
+		pos[i, 1] = cx + r * cos(t)
+		pos[i, 2] = cy + r * sin(t)
+	}
+
+	return((1::N), pos)
+}
+
 end
 
 
@@ -907,7 +1228,6 @@ end
 mata: // square()
 real matrix square(real matrix X)
 	{
-
 		real scalar maxsize
 		real matrix sqr
 	
@@ -929,7 +1249,6 @@ end
 // 	  binary matrix    //  
 *************************
 
-
 mata:  // binary()
 real matrix binary(real matrix X)
 	{
@@ -937,11 +1256,26 @@ real matrix binary(real matrix X)
 	}
 end
 
+mata:  // edgecost()
+real matrix edgecost(real matrix X)
+	{
+		real scalar i, j
+		real matrix C
+
+		C = J(rows(X), cols(X), 0)
+		for (i=1; i<=rows(X); i++) {
+			for (j=1; j<=cols(X); j++) {
+				if (X[i,j] > 0) C[i,j] = 1 / X[i,j]
+			}
+		}
+		return (C)
+	}
+end
+
 
 ***************
 // dequeue   //  // stacking function from nwcommands
 ***************
-
 
 mata:
 
@@ -965,7 +1299,7 @@ end
 
 
 ****************
-//  between   //  //  from nwcommands. 
+//  between   // 
 ****************
 
 
@@ -1032,10 +1366,8 @@ end
 
 
 
-
-
 mata:
-real matrix betweenness(real matrix G, real matrix weight, real scalar wgt)
+real matrix betweenness(real matrix G, real matrix weighted, real scalar wgt)
 {
 	real scalar num, s
 	real matrix between, P, sigma, D, S
@@ -1050,7 +1382,7 @@ real matrix betweenness(real matrix G, real matrix weight, real scalar wgt)
 			_shortest_path(G, s,         S, D, sigma, P)
 		}
 		else {
-			_dijkstra_path(G, s, weight, S, D, sigma, P)
+			_dijkstra_path(G, s, weighted, S, D, sigma, P)
 		}
 				
 		// accumulate
@@ -1058,7 +1390,7 @@ real matrix betweenness(real matrix G, real matrix weight, real scalar wgt)
 		
 	}
 	
-	between = _rescale(between, num, 1, 0, 0, 0) // between, nodes, normalized, directed, k, endpoints
+	between = _rescale(between, num, 1, 1, 0, 0) // between, nodes, normalized, directed, k, endpoints
 	return (between)
 		
 }
@@ -1108,6 +1440,8 @@ void _shortest_path(real matrix G, real scalar s, real vector S, real vector D, 
 				Q = Q \ neighbor
 				D[neighbor] = D[currentNode] + 1
                 sigma[neighbor] = sigma[currentNode]
+				firstMissing = selectindex(P[neighbor, .] :== .)[1]
+				P[neighbor, firstMissing] = currentNode
             }
 			else if (D[neighbor] == D[currentNode] + 1) {
 				// Multiple shortest paths to this node
@@ -1122,7 +1456,7 @@ end
 
 
 mata:
-void _dijkstra_path(real matrix G, real scalar s, real matrix weight, real vector S, real vector D, real vector sigma, real matrix P)
+void _dijkstra_path(real matrix G, real scalar s, real matrix weighted, real vector S, real vector D, real vector sigma, real matrix P)
 {
  
 	real scalar idx, v, min_dist, dist, pred, w, vw_dist, firstMissing
@@ -1144,7 +1478,7 @@ void _dijkstra_path(real matrix G, real scalar s, real matrix weight, real vecto
         min_dist = min(Q[.,1])
         idx = (Q[.,1] :== min_dist)[1]
         dist = Q[idx, 1]
-        v = Q[idx, 3]
+		v = Q[idx, 2]
         
         // Remove from Q
 		if (rows(Q) == 1) {
@@ -1162,12 +1496,13 @@ void _dijkstra_path(real matrix G, real scalar s, real matrix weight, real vecto
             continue
         }
 		done[v] = 1
+		S = S \ v
         
         D[v] = dist
         
 		for (w = 1; w <= cols(G); w++) {
 			if (G[v, w] == 1) {
-                vw_dist = dist + weight[v, w]
+                vw_dist = dist + weighted[v, w]
                 
 				// If w not yet finalized
                 if (!done[w]) {
@@ -1385,6 +1720,156 @@ real vector BFS(real matrix G, real scalar source)
 end
 
 
+mata:
+real vector descendants_count(real matrix G) {
+
+	real scalar N, i
+	real vector out, d
+
+	N = rows(G)
+	out = J(N, 1, 0)
+
+	for (i=1; i<=N; i++) {
+		d = BFS(G, i)
+		out[i] = sum(d :< .) - 1
+	}
+
+	return (out)
+}
+end
+
+
+mata:
+real vector ancestors_count(real matrix G) {
+
+	real scalar N, i
+	real vector out, d
+
+	N = rows(G)
+	out = J(N, 1, 0)
+
+	for (i=1; i<=N; i++) {
+		d = BFS(G', i)
+		out[i] = sum(d :< .) - 1
+	}
+
+	return (out)
+}
+end
+
+
+mata:
+real vector reciprocity_node(real matrix G) {
+
+	real scalar N, i, n_total, n_overlap
+	real vector out
+	real vector pred, succ
+
+	N = rows(G)
+	out = J(N, 1, 0)
+
+	for (i=1; i<=N; i++) {
+		pred = (G[., i] :> 0)
+		succ = (G[i, .]' :> 0)
+		n_total = sum(pred) + sum(succ)
+		if (n_total > 0) {
+			n_overlap = sum(pred :& succ)
+			out[i] = (2 * n_overlap) / n_total
+		}
+		else {
+			out[i] = 0
+		}
+	}
+
+	return (out)
+}
+end
+
+
+mata:
+real vector core_number_undirected(real matrix G) {
+
+	real scalar N, i, j, k, changed, remaining
+	real vector core, deg, alive
+	real matrix U
+
+	N = rows(G)
+	U = (G :+ G') :> 0
+	core = J(N, 1, 0)
+	alive = J(N, 1, 1)
+	deg = rowsum(U)'
+	remaining = N
+	k = 0
+
+	while (remaining > 0) {
+		changed = 1
+		while (changed) {
+			changed = 0
+			for (i=1; i<=N; i++) {
+				if (alive[i] & deg[i] <= k) {
+					alive[i] = 0
+					core[i] = k
+					remaining = remaining - 1
+					for (j=1; j<=N; j++) {
+						if (alive[j] & U[i, j] == 1) deg[j] = deg[j] - 1
+					}
+					changed = 1
+				}
+			}
+		}
+		if (remaining > 0) k = k + 1
+	}
+
+	return (core)
+}
+end
+
+
+////////////////////////////////////
+// 		dijkstra distances 	  //
+////////////////////////////////////
+
+
+mata:
+real vector dijkstra_distances(real matrix G, real matrix W, real scalar source)
+{
+	real scalar N, iter, u, v, best, alt
+	real vector dist, done
+
+	N = rows(G)
+	dist = J(N, 1, .)
+	done = J(N, 1, 0)
+	dist[source] = 0
+
+	for (iter=1; iter<=N; iter++) {
+		u = .
+		best = .
+
+		for (v=1; v<=N; v++) {
+			if (!done[v] & !missing(dist[v])) {
+				if (missing(best) | dist[v] < best) {
+					best = dist[v]
+					u = v
+				}
+			}
+		}
+
+		if (missing(u)) break
+		done[u] = 1
+
+		for (v=1; v<=N; v++) {
+			if (G[u,v] == 1 & W[u,v] > 0) {
+				alt = dist[u] + W[u,v]
+				if (missing(dist[v]) | alt < dist[v]) dist[v] = alt
+			}
+		}
+	}
+
+	return (dist)
+}
+end
+
+
 ////////////////////////////////////
 // 		closeness centrality  	  //  // failing for dangling nodes.
 ////////////////////////////////////
@@ -1394,18 +1879,21 @@ mata:
 real vector closeness_centrality(real matrix G) {
 
     real matrix closeness, bfs_lengths, reachable
+    real scalar nreach
 
     N = rows(G)
     closeness = J(N, 1, .)
 
     for (i=1; i<=N; i++) {
-        bfs_lengths = BFS(G, i)
+        // For directed graphs, use inward distances to match standard definition.
+		bfs_lengths = BFS(G', i)
 		reachable = select(bfs_lengths, bfs_lengths :< .)
-		if (rows(reachable) <= 1) {
+		nreach = rows(reachable)
+		if (nreach <= 1) {
 			closeness[i] = 0
 		}
 		else {
-			closeness[i] = (rows(reachable) - 1) / sum(reachable)
+			closeness[i] = ((nreach - 1) / sum(reachable)) * ((nreach - 1) / (N - 1))
 		}
     }
 	
@@ -1427,7 +1915,8 @@ real vector harmonic_centrality(real matrix G) {
     harmonic = J(N, 1, 0)
 
     for (i=1; i<=N; i++) {
-        bfs_lengths = BFS(G, i)
+		// For directed graphs, use inward distances to match standard definition.
+		bfs_lengths = BFS(G', i)
 		reachable = select(bfs_lengths, bfs_lengths :< .)
 		reachable = select(reachable, reachable :> 0)
 		if (rows(reachable) > 0) {
@@ -1436,6 +1925,54 @@ real vector harmonic_centrality(real matrix G) {
     }
 	
     return (harmonic)
+}
+end
+
+
+mata:
+real vector closeness_centrality_w(real matrix G, real matrix W) {
+
+	real matrix closeness, d_lengths, reachable
+	real scalar nreach
+
+	N = rows(G)
+	closeness = J(N, 1, .)
+
+	for (i=1; i<=N; i++) {
+		d_lengths = dijkstra_distances(G', W', i)
+		reachable = select(d_lengths, d_lengths :< .)
+		nreach = rows(reachable)
+		if (nreach <= 1) {
+			closeness[i] = 0
+		}
+		else {
+			closeness[i] = ((nreach - 1) / sum(reachable)) * ((nreach - 1) / (N - 1))
+		}
+	}
+
+	return (closeness)
+}
+end
+
+
+mata:
+real vector harmonic_centrality_w(real matrix G, real matrix W) {
+
+	real matrix harmonic, d_lengths, reachable
+
+	N = rows(G)
+	harmonic = J(N, 1, 0)
+
+	for (i=1; i<=N; i++) {
+		d_lengths = dijkstra_distances(G', W', i)
+		reachable = select(d_lengths, d_lengths :< .)
+		reachable = select(reachable, reachable :> 0)
+		if (rows(reachable) > 0) {
+			harmonic[i] = sum(1 :/ reachable)
+		}
+	}
+
+	return (harmonic)
 }
 end
 
@@ -1479,6 +2016,56 @@ real vector clustering_coefficient(real matrix G) {
 }
 end
 
+
+mata:
+real vector clustering_coefficient_directed(real matrix G) {
+
+	real scalar N, i, j, m, dt, db, denom, tri_count
+	real scalar nij, nim, njm
+	real vector clustering, neighbors
+
+	N = rows(G)
+	clustering = J(N, 1, 0)
+
+	for (i=1; i<=N; i++) {
+		neighbors = selectindex((G[i,.] :+ G[.,i]') :> 0)
+		dt = length(neighbors)
+
+		if (dt < 2) {
+			clustering[i] = 0
+			continue
+		}
+
+		db = 0
+		for (j=1; j<=dt; j++) {
+			if (G[i, neighbors[j]] > 0 & G[neighbors[j], i] > 0) db = db + 1
+		}
+
+		denom = 2 * (dt * (dt - 1) - 2 * db)
+		if (denom <= 0) {
+			clustering[i] = 0
+			continue
+		}
+
+		tri_count = 0
+		for (j=1; j<=dt; j++) {
+			for (m=1; m<=dt; m++) {
+				if (j != m) {
+					nij = G[i, neighbors[j]] + G[neighbors[j], i]
+					nim = G[i, neighbors[m]] + G[neighbors[m], i]
+					njm = G[neighbors[j], neighbors[m]] + G[neighbors[m], neighbors[j]]
+					tri_count = tri_count + (nij * nim * njm)
+				}
+			}
+		}
+
+		clustering[i] = tri_count / denom
+	}
+
+	return (clustering)
+}
+end
+
 ////////////////////////////////////
 // 		transitivity  			  //
 ////////////////////////////////////
@@ -1486,23 +2073,26 @@ end
 mata:
 real scalar transitivity(real matrix G) {
 
-    real scalar N, i, j, k, triangles, triples, m
+    real scalar N, i, j, k, triangles, triples, m, possible
+    real matrix U
     real vector neighbors
 
     N = rows(G)
     triangles = 0
     triples = 0
+	U = (G :+ G') :> 0
 
     for (i=1; i<=N; i++) {
-        neighbors = selectindex((G[i,.] :+ G[.,i]') :> 0)
+		neighbors = selectindex(U[i,.])
 		k = length(neighbors)
 		
 		if (k >= 2) {
-			triples = triples + k * (k - 1)
+			possible = k * (k - 1) / 2
+			triples = triples + possible
 			
 			for (j=1; j<=k-1; j++) {
 				for (m=j+1; m<=k; m++) {
-					if (G[neighbors[j], neighbors[m]] > 0 | G[neighbors[m], neighbors[j]] > 0) {
+					if (U[neighbors[j], neighbors[m]] > 0) {
 						triangles = triangles + 1
 					}
 				}
@@ -1511,7 +2101,7 @@ real scalar transitivity(real matrix G) {
     }
 	
 	if (triples == 0) return(0)
-    return ((3 * triangles) / triples)
+    return (triangles / triples)
 }
 end
 
@@ -1523,12 +2113,15 @@ mata:
 real vector eccentricity(real matrix G) {
 
     real matrix eccentric, bfs_lengths, reachable
+	real matrix U
 
     N = rows(G)
     eccentric = J(N, 1, .)
+	U = (G :+ G') :> 0
 
     for (i=1; i<=N; i++) {
-        bfs_lengths = BFS(G, i)
+		// Eccentricity is computed on undirected connectivity to avoid direction-only inflation.
+        bfs_lengths = BFS(U, i)
 		reachable = select(bfs_lengths, bfs_lengths :< .)
 		if (rows(reachable) <= 1) {
 			eccentric[i] = .
@@ -1539,6 +2132,46 @@ real vector eccentricity(real matrix G) {
     }
 	
     return (eccentric)
+}
+end
+
+
+mata:
+real vector eccentricity_w(real matrix G, real matrix W) {
+
+	real matrix eccentric, d_lengths, reachable
+	real matrix U, UW
+
+	N = rows(G)
+	eccentric = J(N, 1, .)
+	U = (G :+ G') :> 0
+	UW = J(rows(W), cols(W), 0)
+
+	for (i=1; i<=rows(W); i++) {
+		for (j=1; j<=cols(W); j++) {
+			if (U[i,j] == 1) {
+				if (W[i,j] > 0 & W[j,i] > 0) {
+					if (W[i,j] < W[j,i]) UW[i,j] = W[i,j]
+					else UW[i,j] = W[j,i]
+				}
+				else if (W[i,j] > 0) UW[i,j] = W[i,j]
+				else if (W[j,i] > 0) UW[i,j] = W[j,i]
+			}
+		}
+	}
+
+	for (i=1; i<=N; i++) {
+		d_lengths = dijkstra_distances(U, UW, i)
+		reachable = select(d_lengths, d_lengths :< .)
+		if (rows(reachable) <= 1) {
+			eccentric[i] = .
+		}
+		else {
+			eccentric[i] = max(reachable)
+		}
+	}
+
+	return (eccentric)
 }
 end
 
@@ -1605,7 +2238,11 @@ mata:
  
 real vector katz_centrality(real matrix G, real scalar alpha, real scalar beta)   // alpha and beta are open parameters
 {
-    katz = beta * luinv(I(rows(G)) - alpha * G) * J(rows(G), 1, 1)
+	real scalar norm_k
+	// Use inbound influence for directed graphs: x = alpha * G' * x + beta.
+	katz = beta * luinv(I(rows(G)) - alpha * G') * J(rows(G), 1, 1)
+	norm_k = sqrt(sum(katz:^2))
+	if (norm_k > 0) katz = katz :/ norm_k
     return (katz)
 }
 
@@ -1669,33 +2306,27 @@ mata:
 // Define the HITS function
     void hits(real matrix A, real scalar max_iter, real scalar tol, real vector hub, real vector aut)
     {
-        real matrix prev_a, prev_h
-	real scalar norm_a, norm_h
+		complex matrix Xh, Lh, Xa, La
+		real matrix Ah, Aa
+		real scalar idxh, idxa, norm_h, norm_a
 
-    aut = J(rows(A), 1, 1)
-    hub = J(rows(A), 1, 1)
+		// Principal right eigenvectors of A*A' (hubs) and A'*A (authorities).
+		Ah = A * A'
+		Aa = A' * A
 
-    i = 0
-    diff_a = tol + 1
-    diff_h = tol + 1
-    
-    while ((diff_a > tol | diff_h > tol) & i < max_iter) {
-        prev_a = aut
-        prev_h = hub
+		eigensystem(Ah, Xh=., Lh=.)
+		eigensystem(Aa, Xa=., La=.)
 
-        aut = A * (A' * hub)
-        hub = (A' * aut)
+		idxh = selectindex(Re(Lh) :== max(Re(Lh)))[1]
+		idxa = selectindex(Re(La) :== max(Re(La)))[1]
 
-        norm_a = sqrt(sum(aut :* aut))
-        norm_h = sqrt(sum(hub :* hub))
-		if (norm_a > 0) aut = aut / norm_a
-		if (norm_h > 0) hub = hub / norm_h
+		hub = abs(Re(Xh[., idxh]))
+		aut = abs(Re(Xa[., idxa]))
 
-        diff_a = max(abs(aut - prev_a))
-        diff_h = max(abs(hub - prev_h))
-
-        i++
-    }
+		norm_h = sum(hub)
+		norm_a = sum(aut)
+		if (norm_h > 0) hub = hub :/ norm_h
+		if (norm_a > 0) aut = aut :/ norm_a
 }
 end
 
@@ -1840,12 +2471,10 @@ real matrix layout_sphere(real matrix G)
 end
 
 
-
 **** Bipartite layout ****
 ** Left column: nodes with outgoing edges (sources).
 ** Right column: pure-target nodes (no outgoing edges).
 ** If no pure targets exist, nodes are split by outdegree vs indegree.
-** 5%/95% horizontal padding keeps nodes off the exact axis boundary.
 
 
 mata:
@@ -1901,8 +2530,6 @@ end
 
 
 ** Positions nodes using the 2nd and 3rd eigenvectors of the graph Laplacian.
-** Reference: https://networkx.org/documentation/stable/reference/generated/networkx.drawing.layout.spectral_layout.html
-
 
 mata:
 
@@ -1950,9 +2577,7 @@ real matrix spectral_layout(real matrix A, real scalar width, real scalar height
 end
 
 
-
 **** All-pairs shortest-path via BFS (helper for Kamada-Kawai) ****
-
 
 mata:
 
@@ -1971,7 +2596,6 @@ real matrix apsp_bfs(real matrix G)
 }
 
 end
-
 
 
 **** Kamada-Kawai layout ****

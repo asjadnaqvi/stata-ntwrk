@@ -1,5 +1,5 @@
 {smcl}
-{* 02Jun2026}{...}
+{* 17Jun2026}{...}
 {hi:help ntwrk}{...}
 {right:{browse "https://github.com/asjadnaqvi/stata-ntwrk":ntwrk v1.0 (beta) (GitHub)}}
 
@@ -9,10 +9,10 @@
 
 {p 4 4 2}
 {cmd:ntwrk} computes a set of node-level network statistics and draws directed network graphs with multiple layouts.
-It includes weighted links, optional curved arcs, and export of graph coordinates and attributes.
+It includes optional weighted centrality calculations, optional curved arcs, and export of graph coordinates and attributes.
 
 {p 4 4 2}
-Computation notes: edge-list rows are first collapsed by ({it:from}, {it:to}) using the sum of {it:value}. Centrality and layout algorithms are then computed on a binary adjacency matrix (edge exists if collapsed value > 0). Link {it:value} is used for drawing classes (quantiles) and labels.
+Computation notes: edge-list rows are first collapsed by ({it:from}, {it:to}) using the sum of {it:value}. By default, centrality and layout algorithms are then computed on a binary adjacency matrix (edge exists if collapsed value > 0). With {opt weighted}, supported centrality routines use weighted links, where path-based routines use edge cost derived from the collapsed link value. Link {it:value} is also used for drawing classes (quantiles) and labels.
 
 {p 4 4 2}
 Parts of the routines are based on ideas from {browse "https://igraph.org/":igraph} and {browse "https://networkx.org/":NetworkX}.
@@ -21,7 +21,7 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 {marker syntax}{title:Syntax}
 {p 8 15 2}
 
-{cmd:ntwrk} {it:from to value} {ifin} {cmd:,} [{help ntwrk##measures:{it:network measures}}] [{help ntwrk##common:{it:parameters}}]
+{cmd:ntwrk} {it:value} {ifin} {cmd:,} {opt from(varname)} {opt to(varname)} [{help ntwrk##measures:{it:network measures}}] [{help ntwrk##common:{it:parameters}}]
 	[{help ntwrk##layout:{it:network layout}}] 
 	[{help ntwrk##nodes:{it:node options}}]
 	[{help ntwrk##links:{it:link options}}] [{help ntwrk##arcs:{it:arc options}}] 
@@ -35,38 +35,58 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {marker required}{dlgtab:Required}
 
-{p2coldent : {opt network} {it:from to value}}Three numeric variables: source node, target node, and link value (edge weight).{p_end}
+{p2coldent : {opt value}}Numeric link-value variable. Repeated ({it:from}, {it:to}) pairs are collapsed by summing this variable before analysis and plotting.{p_end}
+
+{p2coldent : {opt from(varname)}}Source-node variable. String and numeric identifiers are both supported.{p_end}
+
+{p2coldent : {opt to(varname)}}Target-node variable. String and numeric identifiers are both supported.{p_end}
 
 
 {marker measures}{dlgtab:Network measures}
 
-{p2coldent : {bf:degree (always returned)}}Total degree computed as indegree + outdegree on the binary directed graph. No option is required for this column; it is always included in node output.{p_end}
+{p2coldent : {opt measure(names)}}Space- or comma-separated list of node measures to compute. Valid names are {it:degree}, {it:between}, {it:indegree}, {it:outdegree}, {it:closeness}, {it:harmonic}, {it:clustering}, {it:transitivity}, {it:eccentricity}, {it:eigenval}, {it:eigenvec}, {it:katz}, {it:pagerank}, {it:hits}, {it:core}, {it:reciprocity}, {it:ancestors}, and {it:descendants}.{p_end}
 
-{p2coldent : {opt indegree}}In-degree count on the binary directed graph (number of incoming neighbors).{p_end}
+{p2coldent : {opt weighted}}Use weighted links for supported centrality routines. Without this option, statistics are computed on the binary directed graph. Clustering and transitivity remain topology-based.{p_end}
 
-{p2coldent : {opt outdegree}}Out-degree count on the binary directed graph (number of outgoing neighbors).{p_end}
+{p2coldent : {opt directedclustering}}Use directed triangle logic for {it:clustering}. If omitted, local clustering is computed with undirected-style neighbor closure (direction ignored for triangle counting).{p_end}
 
-{p2coldent : {opt between}}Compute normalized betweenness centrality from unweighted shortest paths (direction respected). Edge magnitudes are not used in path lengths.{p_end}
+{p2coldent : {bf:Default measure behavior}}If {opt measure()} is omitted, only {it:degree} is returned. If {opt hits} is requested, the node output contains both {it:hub} and {it:authority}.{p_end}
 
-{p2coldent : {opt closeness}}Compute outward-reach closeness centrality from BFS distances in the directed graph. Unreachable nodes contribute 0; isolated nodes can have closeness 0.{p_end}
+{p2coldent : {bf:degree}}Total degree computed as indegree + outdegree on the directed graph.{p_end}
 
-{p2coldent : {opt harmonic}}Compute harmonic centrality from BFS distances in the directed graph. Unreachable nodes contribute 0.{p_end}
+{p2coldent : {bf:indegree}}In-degree count on the directed graph (number of incoming neighbors), or weighted in-degree with {opt weighted}.{p_end}
 
-{p2coldent : {opt clustering}}Compute local clustering coefficient. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
+{p2coldent : {bf:outdegree}}Out-degree count on the directed graph (number of outgoing neighbors), or weighted out-degree with {opt weighted}.{p_end}
 
-{p2coldent : {opt transitivity}}Compute global transitivity. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
+{p2coldent : {bf:between}}Compute normalized betweenness centrality. By default, shortest paths are unweighted; with {opt weighted}, paths use weighted edge cost.{p_end}
 
-{p2coldent : {opt eccentricity}}Compute node eccentricity as the maximum finite directed BFS distance from each node. Nodes with no reachable others return missing.{p_end}
+{p2coldent : {bf:closeness}}Compute outward-reach closeness centrality. By default, distances come from BFS on the directed graph; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0; isolated nodes can have closeness 0.{p_end}
 
-{p2coldent : {opt eigenval}}Compute iterative eigenvalue centrality (controlled by {opt iterations()} and {opt tolerance()}).{p_end}
+{p2coldent : {bf:harmonic}}Compute harmonic centrality. By default, distances come from BFS on the directed graph; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0.{p_end}
 
-{p2coldent : {opt eigenvec}}Compute leading-eigenvector centrality.{p_end}
+{p2coldent : {bf:clustering}}Compute local clustering coefficient. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
 
-{p2coldent : {opt katz}}Compute Katz centrality. Current fixed internals are Katz alpha=0.1 and beta=1.{p_end}
+{p2coldent : {bf:transitivity}}Compute global transitivity. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
 
-{p2coldent : {opt pagerank}}Compute PageRank. Current fixed damping is 0.85; {opt iterations()} and {opt tolerance()} govern convergence checks.{p_end}
+{p2coldent : {bf:eccentricity}}Compute node eccentricity as the maximum finite directed path length from each node. With {opt weighted}, weighted path lengths are used. Nodes with no reachable others return missing.{p_end}
 
-{p2coldent : {opt hits}}Compute HITS hub/authority scores. {opt iterations()} and {opt tolerance()} govern convergence checks.{p_end}
+{p2coldent : {bf:eigenval}}Compute iterative eigenvalue centrality, controlled by {opt iterations()} and {opt tolerance()}. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+
+{p2coldent : {bf:eigenvec}}Compute leading-eigenvector centrality. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+
+{p2coldent : {bf:katz}}Compute Katz centrality. Use {opt katzalpha()} to set the attenuation parameter; default is {opt katzalpha(0.1)} (beta is fixed at 1). With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+
+{p2coldent : {bf:pagerank}}Compute PageRank. Current fixed damping is 0.85; {opt iterations()} and {opt tolerance()} govern convergence checks. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+
+{p2coldent : {bf:hits}}Compute HITS hub and authority scores. {opt iterations()} and {opt tolerance()} govern convergence checks. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+
+{p2coldent : {bf:core}}Compute undirected core number (k-core index) for each node using the symmetrized topology.{p_end}
+
+{p2coldent : {bf:reciprocity}}Compute node-level reciprocity, capturing the share of each node's incident directed ties that are mutual.{p_end}
+
+{p2coldent : {bf:ancestors}}Compute number of nodes that can reach each node via directed paths.{p_end}
+
+{p2coldent : {bf:descendants}}Compute number of nodes reachable from each node via directed paths.{p_end}
 
 
 {marker common}{dlgtab:Parameters}
@@ -74,6 +94,8 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 {p2coldent : {opt iter:ations(num)}}Maximum iterations for iterative routines. Default is {opt iterations(100)}.{p_end}
 
 {p2coldent : {opt tol:erance(num)}}Convergence tolerance. Default is {opt tolerance(1e-6)}.{p_end}
+
+{p2coldent : {opt katzal:pha(num)}}Katz attenuation parameter used when {it:katz} is requested. Default is {opt katzalpha(0.1)}.{p_end}
 
 {p2coldent : {opt radius(num)}}Radius used by the {opt layout(star)} layout. Default is {opt radius(5)}.{p_end}
 
@@ -96,6 +118,10 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {p2coldent : {opt layout(bipartite)}}Two-column layout: source-like nodes on the left, pure targets on the right (fallback split by outdegree vs indegree if needed). Good for sender-receiver structures.{p_end}
 
+{p2coldent : {opt layout(shell)}}Two-shell circular layout where higher-degree nodes are placed on the inner shell and remaining nodes on the outer shell.{p_end}
+
+{p2coldent : {opt layout(spiral)}}Place nodes along an outward spiral from the center.{p_end}
+
 
 {p2coldent : {opt seed(num)}}Random seed applied before computation. This affects stochastic components such as {opt layout(fr)} and {opt layout(random)}.{p_end}
 
@@ -104,9 +130,11 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {marker links}{dlgtab:Link options}
 
-{p2coldent : {opt lquant:ile(num)}}Number of link quantile classes for color/width grouping. Default is {opt lquantile(10)}.{p_end}
+{p2coldent : {opt lquant:ile(num)}}Number of link quantile classes for color/width grouping. Default is {opt lquantile(5)}.{p_end}
 
-{p2coldent : {opt lw:idth(num)}}Base line-width multiplier. Default is {opt lwidth(1)}.{p_end}
+{p2coldent : {opt lw:idth(num)}}Base line-width multiplier. Default is {opt lwidth(0.5)}.{p_end}
+
+{p2coldent : {opt llab:size(str)}}Link-label size for edge-value labels. Applies to both straight and {opt arc} link labels. Default is {opt llabsize(1.2)}.{p_end}
 
 {p2coldent : {opt la:lpha(num)}}Link transparency. Default is {opt lalpha(80)}.{p_end}
 
@@ -115,6 +143,10 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 {p2coldent : {opt lscale}}Enable quantile-based link width scaling. Without this option, all links use constant {opt lwidth()}.{p_end}
 
 {p2coldent : {opt lscalefac:tor(num)}}Exponent used in link width scaling when {opt lscale} is on. Default is {opt lscalefactor(0.3333)}.{p_end}
+
+{p2coldent : {opt lprop}}Accepted by the parser for proportional link styling, but currently has no distinct effect beyond the existing quantile-based link scaling options.{p_end}
+
+{p2coldent : {opt lpropfac:tor(num)}}Accepted with {opt lprop}; currently reserved and has no distinct effect in the plotting routine.{p_end}
 
 {p2coldent : {opt lpalette(str)}}Color palette for links via {help colorpalette}. The default is {it:eltblue}.{p_end}
 
@@ -134,13 +166,17 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {marker nodes}{dlgtab:Node options}
 
-{p2coldent : {opt mquant:ile(num)}}Number of node quantile classes. Default is {opt mquantile(10)}.{p_end}
+{p2coldent : {opt mquant:ile(num)}}Number of node quantile classes. Default is {opt mquantile(5)}.{p_end}
 
-{p2coldent : {opt mvar(varname)}}Variable used for node quantile assignment (node color classes). If omitted, {it:degree} is used.{p_end}
+{p2coldent : {opt mvar(varname)}}Variable used for node quantile assignment (node color classes). If omitted, node classes are based on the selected node metric, which defaults to {it:degree}.{p_end}
 
 {p2coldent : {opt ms:ize(num)}}Base node size. Default is {opt msize(5)}.{p_end}
 
-{p2coldent : {opt ma:lpha(num)}}Node transparency. Default is {opt malpha(80)}.{p_end}
+{p2coldent : {opt mlab:size(str)}}Node-label size. Default is {opt mlabsize(1.6)}.{p_end}
+
+{p2coldent : {opt ma:lpha(num)}}Node fill transparency. Default is {opt malpha(80)}.{p_end}
+
+{p2coldent : {opt mlap:ha(num)}}Node outline transparency. If omitted, it inherits {opt malpha()}. This lets you control fill and outline alpha separately.{p_end}
 
 {p2coldent : {opt msym:bol(str)}}Reserved marker-symbol option. Node areas are currently drawn as circle polygons and labels are drawn separately.{p_end}
 
@@ -148,16 +184,28 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {p2coldent : {opt mscalefac:tor(num)}}Exponent used in node scaling when {opt mscale} is on. Default is {opt mscalefactor(0.3333)}.{p_end}
 
-{p2coldent : {opt mpalette(str)}}Color palette for node fills via {help colorpalette}. The default is {it:gs10}.{p_end}
+{p2coldent : {opt mlcolor(str)}}Outline color for node circles. If omitted, the outline follows the node fill color.{p_end}
+
+{p2coldent : {opt mlw:idth(num)}}Outline width for node circles.{p_end}
+
+{p2coldent : {opt mprop}}Accepted by the parser for proportional node styling. In the current plotting routine it primarily affects palette handling; node sizes remain controlled by {opt msize}, {opt mscale}, and {opt mscalefactor()}.{p_end}
+
+{p2coldent : {opt mpropfac:tor(num)}}Accepted with {opt mprop}; currently reserved and has no distinct effect in the plotting routine.{p_end}
+
+{p2coldent : {opt mpalette(str)}}Color palette for node fills via {help colorpalette}. Current defaults are {it:gs12} without {opt mprop}, and {it:cividis} with {opt mprop}.{p_end}
 
 
 {marker output}{dlgtab:Output and export}
 
-{p2coldent : {opt nogra:ph}}Skip plotting. In the current version, this also bypasses the {opt savedata} export block.{p_end}
+{p2coldent : {opt save}}Export generated link/node coordinates and attributes to disk as {it:saveprefix}{cmd:.dta}.{p_end}
 
-{p2coldent : {opt savedata}}Export generated link/node coordinates and attributes to disk.{p_end}
+{p2coldent : {opt replace}}Allow the exported dataset to overwrite an existing file when {opt save} is specified.{p_end}
 
-{p2coldent : {opt saveprefix(str)}}Prefix for exported dataset filename. If omitted with {opt savedata}, default prefix is {it:_network}.{p_end}
+{p2coldent : {opt saveprefix(str)}}Prefix for the exported dataset filename. If omitted with {opt save}, the default prefix is {it:_network}.{p_end}
+
+{p2coldent : {opt nogra:ph}}Skip plotting but still allow dataset export when {opt save} is specified.{p_end}
+
+{p2coldent : {opt format(str)}}Numeric display format applied to edge-value labels in the graph (including curved labels when {opt arc} is used). Default is {opt format(%9.2f)}.{p_end}
 
 
 
@@ -178,7 +226,13 @@ Optional dependency used only with {opt arc}:
 
 {title:Examples}
 
-See {browse "https://github.com/asjadnaqvi/stata-ntwrk":GitHub} for examples.
+{p 4 4 2}{stata "ntwrk val, from(src) to(dst)"}{p_end}
+
+{p 4 4 2}{stata "ntwrk val, from(src) to(dst) measure(degree between pagerank) layout(fr) seed(42)"}{p_end}
+
+{p 4 4 2}{stata "ntwrk val, from(src) to(dst) weighted measure(degree between closeness harmonic hits) nograph save saveprefix(my_network) replace"}{p_end}
+
+See {browse "https://github.com/asjadnaqvi/stata-ntwrk":GitHub} for additional examples.
 
 
 {hline}
@@ -191,8 +245,8 @@ Please submit bugs, errors, feature requests on {browse "https://github.com/asja
 {title:Package details}
 
 Version      : {bf:ntwrk} v1.0 (beta)
-This release : 02 Jun 2026
-First release: 02 Jun 2026
+This release : 17 Jun 2026
+First release: 17 Jun 2026
 Repository   : {browse "https://github.com/asjadnaqvi/stata-ntwrk":GitHub}
 Keywords     : Stata, networks, graphs, centrality, visualization
 License      : {browse "https://opensource.org/licenses/MIT":MIT}
