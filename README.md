@@ -114,24 +114,26 @@ help ntwrk
 
 ## Examples
 
-The examples below are adapted from `network_test11.do` and use the BACI country-level trade data shipped with the package.
-
-### 1. Minimal baseline
+Load the data:
 
 ```stata
-use ./data/BACI_HS22_Y2024_country, clear
+use "https://github.com/asjadnaqvi/stata-ntwrk/raw/refs/heads/main/data/BACI_HS22_Y2024_country.dta", clear
+```
+
+### Minimal baseline
+
+```stata
 
 ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 	layout(fr) seed(1234) novalues ///
 	mlabsize(1.2) lwidth(0.30) lalpha(75) malpha(90)
 ```
 
-![Minimal baseline](figures/ntwrk_01_baseline_default.png)
+![Minimal baseline](/figures/ntwrk_01_baseline_default.png)
 
-### 2. Cleaner Fruchterman-Reingold layout
+### Cleaner Fruchterman-Reingold layout
 
 ```stata
-use ./data/BACI_HS22_Y2024_country, clear
 
 ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 	measure(degree between) mvar(degree) ///
@@ -142,15 +144,13 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 	lalpha(75) malpha(90)
 ```
 
-![Fruchterman-Reingold layout](figures/ntwrk_02_fr_seeded_clean.png)
+![Fruchterman-Reingold layout](/figures/ntwrk_02_fr_seeded_clean.png)
 
 ### 3. Layout gallery
 
 The commands below use the same data and baseline styling; the figures are shown in pairs so the no-arc and arc versions sit next to each other.
 
 ```stata
-use ./data/BACI_HS22_Y2024_country, clear
-
 ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 	measure(degree between pagerank) mvar(pagerank) ///
 	layout(fr) seed(1234) novalues ///
@@ -166,16 +166,16 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 
 | Layout | No arc | Arc |
 |---|---|---|
-| Fruchterman-Reingold | ![Fruchterman-Reingold layout](figures/ntwrk_06_layout_fr.png) | ![Fruchterman-Reingold arc layout](figures/ntwrk_06_layout_fr_arc.png) |
-| Kamada-Kawai | ![Kamada-Kawai layout](figures/ntwrk_06_layout_kk.png) | ![Kamada-Kawai arc layout](figures/ntwrk_06_layout_kk_arc.png) |
-| Spectral | ![Spectral layout](figures/ntwrk_06_layout_spectral.png) | ![Spectral arc layout](figures/ntwrk_06_layout_spectral_arc.png) |
-| Star | ![Star layout](figures/ntwrk_06_layout_star.png) | ![Star arc layout](figures/ntwrk_06_layout_star_arc.png) |
-| Sphere | ![Sphere layout](figures/ntwrk_06_layout_sphere.png) | ![Sphere arc layout](figures/ntwrk_06_layout_sphere_arc.png) |
-| Grid | ![Grid layout](figures/ntwrk_06_layout_grid.png) | ![Grid arc layout](figures/ntwrk_06_layout_grid_arc.png) |
-| Random | ![Random layout](figures/ntwrk_06_layout_random.png) | ![Random arc layout](figures/ntwrk_06_layout_random_arc.png) |
-| Bipartite | ![Bipartite layout](figures/ntwrk_06_layout_bipartite.png) | ![Bipartite arc layout](figures/ntwrk_06_layout_bipartite_arc.png) |
-| Shell | ![Shell layout](figures/ntwrk_06_layout_shell.png) | ![Shell arc layout](figures/ntwrk_06_layout_shell_arc.png) |
-| Spiral | ![Spiral layout](figures/ntwrk_06_layout_spiral.png) | ![Spiral arc layout](figures/ntwrk_06_layout_spiral_arc.png) |
+| Fruchterman-Reingold | ![Fruchterman-Reingold layout](/figures/ntwrk_06_layout_fr.png) | ![Fruchterman-Reingold arc layout](/figures/ntwrk_06_layout_fr_arc.png) |
+| Kamada-Kawai | ![Kamada-Kawai layout](/figures/ntwrk_06_layout_kk.png) | ![Kamada-Kawai arc layout](/figures/ntwrk_06_layout_kk_arc.png) |
+| Spectral | ![Spectral layout](/figures/ntwrk_06_layout_spectral.png) | ![Spectral arc layout](/figures/ntwrk_06_layout_spectral_arc.png) |
+| Star | ![Star layout](/figures/ntwrk_06_layout_star.png) | ![Star arc layout](/figures/ntwrk_06_layout_star_arc.png) |
+| Sphere | ![Sphere layout](/figures/ntwrk_06_layout_sphere.png) | ![Sphere arc layout](/figures/ntwrk_06_layout_sphere_arc.png) |
+| Grid | ![Grid layout](/figures/ntwrk_06_layout_grid.png) | ![Grid arc layout](/figures/ntwrk_06_layout_grid_arc.png) |
+| Random | ![Random layout](/figures/ntwrk_06_layout_random.png) | ![Random arc layout](/figures/ntwrk_06_layout_random_arc.png) |
+| Bipartite | ![Bipartite layout](/figures/ntwrk_06_layout_bipartite.png) | ![Bipartite arc layout](/figures/ntwrk_06_layout_bipartite_arc.png) |
+| Shell | ![Shell layout](/figures/ntwrk_06_layout_shell.png) | ![Shell arc layout](/figures/ntwrk_06_layout_shell_arc.png) |
+| Spiral | ![Spiral layout](/figures/ntwrk_06_layout_spiral.png) | ![Spiral arc layout](/figures/ntwrk_06_layout_spiral_arc.png) |
 
 ### 4. Styling showcase
 
@@ -190,7 +190,7 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 	subtitle("Filter: value > 100", size(vsmall))
 ```
 
-![Styling showcase](figures/ntwrk_08_styling_showcase.png)
+![Styling showcase](/figures/ntwrk_08_styling_showcase.png)
 
 ### 5. Publication-style preset
 
@@ -205,7 +205,7 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 	subtitle("Nodes: countries | Links: value > 100", size(vsmall))
 ```
 
-![Publication preset](figures/ntwrk_10_publication_preset.png)
+![Publication preset](/figures/ntwrk_10_publication_preset.png)
 
 The same pattern can be adapted for weighted analyses, different layouts, or export-only runs using `nograph save`.
 
