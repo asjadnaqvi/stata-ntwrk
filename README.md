@@ -33,7 +33,7 @@ The command supports the following network measures:
 | `eigenval` | **Eigenvalue centrality score**: the dominant eigenvalue of the adjacency matrix, reported as a constant for the graph. Companion to `eigenvec`. |
 | `eigenvec` | **Eigenvector centrality**: each node's component in the principal eigenvector of the adjacency matrix. A node scores high if it is connected to other high-scoring nodes. |
 | `katz` | **Katz centrality**: a damped version of eigenvector centrality that also credits nodes for *all* paths (not just shortest), with longer paths discounted by an attenuation factor $\alpha$ (default $\alpha = 0.1/\lambda_{\max}$). |
-| `pagerank` | **PageRank**: the stationary distribution of a random walker who follows edges with probability $(1-d)$ and teleports with probability $d$ (damping factor, default 0.85). Widely used to rank nodes in directed graphs. |
+| `pagerank` | **PageRank**: the stationary distribution of a random walker who follows edges with probability $(1-d)$ and teleports with probability $d$ (damping factor, default 0.85).  |
 | `hits` | **HITS (Hyperlink-Induced Topic Search)**: computes two scores per node: *hub* (a good hub points to good authorities) and *authority* (a good authority is pointed to by good hubs). Both scores are stored as separate variables. |
 
 All measures except `transitivity` and `eigenval` produce a per-node variable. When `weighted` is specified, path-based measures (betweenness, closeness, harmonic, eccentricity) use edge weights as distances, and spectral measures (eigenvec, katz, pagerank, hits) use the weighted adjacency matrix.
