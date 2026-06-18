@@ -8,14 +8,7 @@
 {title:ntwrk}: is a Stata package for network analysis and visualization from edge-list data.
 
 {p 4 4 2}
-{cmd:ntwrk} computes a set of node-level network statistics and draws directed network graphs with multiple layouts.
-It includes optional weighted centrality calculations, optional curved arcs, and export of graph coordinates and attributes.
-
-{p 4 4 2}
-Computation notes: edge-list rows are first collapsed by ({it:from}, {it:to}) using the sum of {it:value}. By default, centrality and layout algorithms are then computed on a binary adjacency matrix (edge exists if collapsed value > 0). With {opt weighted}, supported centrality routines use weighted links, where path-based routines use edge cost derived from the collapsed link value. Link {it:value} is also used for drawing classes (quantiles) and labels.
-
-{p 4 4 2}
-Parts of the routines are based on ideas from {browse "https://igraph.org/":igraph} and {browse "https://networkx.org/":NetworkX}.
+Parts of the routines are based on Stata's {browse "https://github.com/THOMASGRUND/NWCOMMANDS":nwcommands} and Python's {browse "https://networkx.org/":NetworkX}.
 
 
 {marker syntax}{title:Syntax}
@@ -31,7 +24,7 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {marker options}{title:Options}
 
-{synoptset 28 tabbed}{...}
+{synoptset 26 tabbed}{...}
 
 {marker required}{dlgtab:Required}
 
@@ -44,15 +37,18 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {marker measures}{dlgtab:Network measures}
 
-{p2coldent : {opt measure(names)}}Space- or comma-separated list of node measures to compute. Valid names are {it:degree}, {it:between}, {it:indegree}, {it:outdegree}, {it:closeness}, {it:harmonic}, {it:clustering}, {it:transitivity}, {it:eccentricity}, {it:eigenval}, {it:eigenvec}, {it:katz}, {it:pagerank}, {it:hits}, {it:core}, {it:reciprocity}, {it:ancestors}, and {it:descendants}.{p_end}
+{p2coldent : {opt measure(names)}}List of node measures to compute. Valid names are {it:degree}, {it:between}, {it:indegree}, {it:outdegree}, {it:closeness},
+{it:harmonic}, {it:clustering}, {it:transitivity}, {it:eccentricity}, {it:eigenval}, {it:eigenvec}, {it:katz}, {it:pagerank}, {it:hits}, {it:core}, {it:reciprocity}, {it:ancestors}, and {it:descendants}.
+If multiple measures are generated then it is highly recommended to save the network data.{p_end}
 
 {p2coldent : {opt weighted}}Use weighted links for supported centrality routines. Without this option, statistics are computed on the binary directed graph. Clustering and transitivity remain topology-based.{p_end}
 
 {p2coldent : {opt directedclustering}}Use directed triangle logic for {it:clustering}. If omitted, local clustering is computed with undirected-style neighbor closure (direction ignored for triangle counting).{p_end}
 
-{p2coldent : {bf:Default measure behavior}}If {opt measure()} is omitted, only {it:degree} is returned. If {opt hits} is requested, the node output contains both {it:hub} and {it:authority}.{p_end}
 
-{p2coldent : {bf:degree}}Total degree computed as indegree + outdegree on the directed graph.{p_end}
+{p2coldent : {it:Measures:}}
+
+{p2coldent : {bf:degree}}Total degree computed as indegree + outdegree on the directed graph. {bf: degree} is calculated by default.{p_end}
 
 {p2coldent : {bf:indegree}}In-degree count on the directed graph (number of incoming neighbors), or weighted in-degree with {opt weighted}.{p_end}
 
@@ -134,7 +130,7 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {p2coldent : {opt lw:idth(num)}}Base line-width multiplier. Default is {opt lwidth(0.5)}.{p_end}
 
-{p2coldent : {opt llab:size(str)}}Link-label size for edge-value labels. Applies to both straight and {opt arc} link labels. Default is {opt llabsize(1.2)}.{p_end}
+{p2coldent : {opt llab:size(str)}}Link-label size for edge-value labels. Default is {opt llabsize(1.2)}.{p_end}
 
 {p2coldent : {opt la:lpha(num)}}Link transparency. Default is {opt lalpha(80)}.{p_end}
 
@@ -159,7 +155,7 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {p2coldent : {opt arcn(num)}}Number of sampled points used per arc. Default is {opt arcn(40)}.{p_end}
 
-{p2coldent : {opt arcrad:ius(num)}}Arc radius passed to the arc constructor; controls curvature when {opt arc} is specified.{p_end}
+{p2coldent : {opt arcrad:ius(num)}}Arc radius passed to the arc routine. Controls curvature when {opt arc} is specified. This is an advanced option and should ideally not be touched.{p_end}
 
 {p2coldent : {opt arrow:size(num)}}Arrowhead size. Default is {opt arrowsize(1.2)}.{p_end}
 
@@ -209,7 +205,7 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 
 
-{p2coldent : {opt *}}Pass standard twoway options that are not explicitly blocked by the command.{p_end}
+{p2coldent : {opt *}}Pass standard twoway options not elsewhere specified.{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -219,26 +215,16 @@ Parts of the routines are based on ideas from {browse "https://igraph.org/":igra
 
 {stata ssc install palettes, replace}
 {stata ssc install colrspace, replace}
-
-Optional dependency used only with {opt arc}:
 {stata ssc install graphfunctions, replace}
 
 
 {title:Examples}
-
-{p 4 4 2}{stata "ntwrk val, from(src) to(dst)"}{p_end}
-
-{p 4 4 2}{stata "ntwrk val, from(src) to(dst) measure(degree between pagerank) layout(fr) seed(42)"}{p_end}
-
-{p 4 4 2}{stata "ntwrk val, from(src) to(dst) weighted measure(degree between closeness harmonic hits) nograph save saveprefix(my_network) replace"}{p_end}
-
-See {browse "https://github.com/asjadnaqvi/stata-ntwrk":GitHub} for additional examples.
+See {browse "https://github.com/asjadnaqvi/stata-ntwrk":GitHub} for examples.
 
 
 {hline}
 
 {title:Feedback}
-
 Please submit bugs, errors, feature requests on {browse "https://github.com/asjadnaqvi/stata-ntwrk/issues":GitHub} by opening a new issue.
 
 
@@ -248,7 +234,7 @@ Version      : {bf:ntwrk} v1.0 (beta)
 This release : 17 Jun 2026
 First release: 17 Jun 2026
 Repository   : {browse "https://github.com/asjadnaqvi/stata-ntwrk":GitHub}
-Keywords     : Stata, networks, graphs, centrality, visualization
+Keywords     : Stata, networks, graphs
 License      : {browse "https://opensource.org/licenses/MIT":MIT}
 
 Author       : {browse "https://github.com/asjadnaqvi":Asjad Naqvi}
