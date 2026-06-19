@@ -13,11 +13,11 @@ prog def ntwrk, sortpreserve
 	local __raw_cmdline `"`0'"'
 	
 		syntax varlist(max = 1 numeric) [if] [in], from(string) to(string)   	 												///     // from, to, value
-			[ Measure(string) weighted directedclustering KATZALpha(real 0.1) ] 	///  	// node measures
+		[ Measure(string) weighted directedclustering KATZALpha(real 0.1) ] 	///  	// node measures
 		[ ITERations(real 100) TOLerance(real 1e-6) radius(real 5) ]   										///		// common parameters
 		[ ARROWSize(string) ]													///		// arrow size
 		[ layout(string) seed(numlist max=1 >=0) width(real 150) height(real 150) 	] 			///		// draw the graphs
-		[ LQUANTile(numlist max=1 >=3) LWidth(string) LLABSize(string) LAlpha(real 80) reduce(real 0) lscale LSCALEFACtor(real 0.3333) lprop LPROPFACtor(real 0.3333) ] 		///		// link options
+		[ LQUANTile(numlist max=1 >=3) LColor(string) LWidth(string) LLABSize(string) LAlpha(real 80) reduce(real 0) lscale LSCALEFACtor(real 0.3333) lprop LPROPFACtor(real 0.3333) ] 		///		// link options
 		[ arc arcn(real 40) ARCRADius(numlist max=1 >0) ] 									///		// arc options
 		[ MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MLABSize(string) malpha(real 80) mlalpha(real 100) MSYMbol(string) mscale  MSCALEFACtor(real 0.3333) MLColor(string) MLWIDth(string) mprop MPROPFACtor(real 0.3333) ]			///		// node options
 		[ save replace saveprefix(string) nograph lpalette(string) mpalette(string) NOVALues format(string) * ]      // saving options
@@ -779,9 +779,14 @@ preserve
 		///////////////////////////
 		// line palette controls //
 		///////////////////////////
-			
-		if "`lpalette'" == "" {
-			local lpalette eltblue
+
+		if "`lcolor'" 	== "" local lcolor emidblue
+ 	
+		if "`lpalette'" == "" local lpalette viridis
+
+
+		if "`lprop'" == "" {
+			local lpalette "`lcolor'"
 		}
 		else {
 			tokenize "`lpalette'", p(",")
@@ -837,12 +842,11 @@ preserve
 
 		}
 
-		if "`mpalette'" == "" {
-			local mpalette cividis
-		}
+		if "`mpalette'" == "" local mpalette cividis
+		
 
 		if "`mprop'" == "" {
-			local mpalette gs13
+			local mpalette khaki
 		}
 		else {
 			tokenize "`mpalette'", p(",")
