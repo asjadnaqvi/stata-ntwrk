@@ -7,9 +7,6 @@
 
 {title:ntwrk}: is a Stata package for network analysis and visualization from edge-list data.
 
-{p 4 4 2}
-Parts of the routines are based on Stata's {browse "https://github.com/THOMASGRUND/NWCOMMANDS":nwcommands} and Python's {browse "https://networkx.org/":NetworkX}.
-
 
 {marker syntax}{title:Syntax}
 {p 8 15 2}
@@ -252,6 +249,11 @@ Use the package details above and repository URL for software citation until an 
 {p 4 8 2}Jann, B. (2018). {browse "https://www.stata-journal.com/article.html?article=gr0075":Color palettes for Stata graphics}. The Stata Journal 18(4): 765-785.
 
 {p 4 8 2}Jann, B. (2022). {browse "https://ideas.repec.org/p/bss/wpaper/43.html":Color palettes for Stata graphics: An update}. University of Bern Social Sciences Working Papers No. 43.
+
+{p 4 8 2}Grund, T. (2015). {browse "https://github.com/THOMASGRUND/NWCOMMANDS":nwcommands}.
+
+{p 4 8 2}{browse "https://networkx.org/en/":networkx}. Network analysis in Python.
+
 
 
 {title:Other visualization packages}
