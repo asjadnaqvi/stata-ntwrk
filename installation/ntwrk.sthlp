@@ -53,17 +53,17 @@ If multiple measures are generated then it is highly recommended to save the net
 
 {p2coldent : {bf:between}}Compute normalized betweenness centrality. By default, shortest paths are unweighted; with {opt weighted}, paths use weighted edge cost.{p_end}
 
-{p2coldent : {bf:closeness}}Compute outward-reach closeness centrality. By default, distances come from BFS on the directed graph; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0; isolated nodes can have closeness 0.{p_end}
+{p2coldent : {bf:closeness}}Compute inbound-reach closeness centrality (distances are evaluated on the reversed directed graph). By default, distances come from BFS; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0; isolated nodes can have closeness 0.{p_end}
 
-{p2coldent : {bf:harmonic}}Compute harmonic centrality. By default, distances come from BFS on the directed graph; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0.{p_end}
+{p2coldent : {bf:harmonic}}Compute inbound harmonic centrality (distances are evaluated on the reversed directed graph). By default, distances come from BFS; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0.{p_end}
 
 {p2coldent : {bf:clustering}}Compute local clustering coefficient. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
 
 {p2coldent : {bf:transitivity}}Compute global transitivity. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
 
-{p2coldent : {bf:eccentricity}}Compute node eccentricity as the maximum finite directed path length from each node. With {opt weighted}, weighted path lengths are used. Nodes with no reachable others return missing.{p_end}
+{p2coldent : {bf:eccentricity}}Compute node eccentricity on a symmetrized (undirected) topology as the maximum finite path length from each node. With {opt weighted}, weighted path lengths are computed on the symmetrized cost graph. Nodes with no reachable others return missing.{p_end}
 
-{p2coldent : {bf:eigenval}}Compute iterative eigenvalue centrality, controlled by {opt iterations()} and {opt tolerance()}. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+{p2coldent : {bf:eigenval}}Compute iterative spectral centrality (power iteration), controlled by {opt iterations()} and {opt tolerance()}. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
 
 {p2coldent : {bf:eigenvec}}Compute leading-eigenvector centrality. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
 

@@ -20,22 +20,26 @@ The command supports the following network measures:
 
 | Measure | Description |
 |---|---|
-| `degree` | Total (undirected) degree: number of distinct neighbours regardless of direction. |
-| `indegree` | Number of edges pointing **into** a node (in-degree). In undirected graphs equals `degree`. |
-| `outdegree` | Number of edges pointing **out of** a node (out-degree). In undirected graphs equals `degree`. |
-| `between` | **Betweenness centrality**: the fraction of all shortest paths in the network that pass through a node. High values indicate bridge or bottleneck nodes. Normalised by $(n-1)(n-2)$ for directed graphs and halved for undirected. |
-| `closeness` | **Closeness centrality**: the reciprocal of the average shortest-path distance from a node to all reachable nodes. Nodes that can quickly reach all others score high. Computed on inbound distances (reversed graph). |
-| `harmonic` | **Harmonic centrality**: sum of reciprocal distances to all other reachable nodes, normalised by $n-1$. Handles disconnected graphs gracefully because unreachable pairs contribute zero rather than infinity. Computed on inbound distances. |
+| `degree` | Total directed degree, computed as `indegree + outdegree`. With `weighted`, this becomes weighted in-strength plus weighted out-strength. |
+| `indegree` | Number of incoming links to a node. With `weighted`, this is the sum of incoming link values. |
+| `outdegree` | Number of outgoing links from a node. With `weighted`, this is the sum of outgoing link values. |
+| `between` | **Betweenness centrality** on directed shortest paths, normalised by $(n-1)(n-2)$. With `weighted`, path lengths use edge costs $1/\text{value}$. |
+| `closeness` | **Closeness centrality** based on inbound distances (computed on the reversed graph), with reachability adjustment for disconnected directed graphs. With `weighted`, distances are from weighted shortest paths. |
+| `harmonic` | **Harmonic centrality** as the sum of reciprocal inbound shortest-path distances (reversed graph). Unreachable nodes contribute zero. With `weighted`, distances are from weighted shortest paths. |
 | `clustering` | **Local clustering coefficient**: the fraction of a node's pairs of neighbours that are themselves connected. Measures how tightly knit the local neighbourhood is. |
 | `transitivity` | **Global transitivity (network-level)**: ratio of closed triangles to all connected triples in the graph. A single graph-level scalar assigned identically to every node in the output. |
-| `eccentricity` | **Eccentricity**: the maximum shortest-path distance from a node to any other reachable node. The minimum eccentricity across all nodes is the graph *radius*; the maximum is the graph *diameter*. |
-| `eigenval` | **Eigenvalue centrality score**: the dominant eigenvalue of the adjacency matrix, reported as a constant for the graph. Companion to `eigenvec`. |
+| `eccentricity` | **Eccentricity** computed on a symmetrised (undirected) version of the graph as the maximum finite shortest-path distance from each node to reachable nodes. With `weighted`, undirected edge cost uses available direction cost (or the minimum if both directions exist). |
+| `eigenval` | Iterative spectral centrality vector (power iteration; controlled by `iterations()` and `tolerance()`). This returns a node-level score vector. |
 | `eigenvec` | **Eigenvector centrality**: each node's component in the principal eigenvector of the adjacency matrix. A node scores high if it is connected to other high-scoring nodes. |
-| `katz` | **Katz centrality**: a damped version of eigenvector centrality that also credits nodes for *all* paths (not just shortest), with longer paths discounted by an attenuation factor $\alpha$ (default $\alpha = 0.1/\lambda_{\max}$). |
-| `pagerank` | **PageRank**: the stationary distribution of a random walker who follows edges with probability $(1-d)$ and teleports with probability $d$ (damping factor, default 0.85).  |
+| `katz` | **Katz centrality** using inbound influence ($G'$) with default `katzalpha(0.1)` and fixed $\beta=1$. With `weighted`, the weighted adjacency matrix is used. |
+| `pagerank` | **PageRank** with damping/follow parameter fixed at `0.85`; teleportation is `0.15`. `iterations()` and `tolerance()` control convergence checks. With `weighted`, transition probabilities use weighted outgoing links. |
 | `hits` | **HITS (Hyperlink-Induced Topic Search)**: computes two scores per node: *hub* (a good hub points to good authorities) and *authority* (a good authority is pointed to by good hubs). Both scores are stored as separate variables. |
+| `core` | Undirected **core number** (k-core index) computed on the symmetrised topology. |
+| `reciprocity` | Node-level reciprocity: share of each node's incident directed ties that are mutual. |
+| `ancestors` | Number of nodes that can reach the node via directed paths. |
+| `descendants` | Number of nodes reachable from the node via directed paths. |
 
-All measures except `transitivity` and `eigenval` produce a per-node variable. When `weighted` is specified, path-based measures (betweenness, closeness, harmonic, eccentricity) use edge weights as distances, and spectral measures (eigenvec, katz, pagerank, hits) use the weighted adjacency matrix.
+All listed measures are node-level outputs. `transitivity` is a network-level scalar that is repeated on each node row for convenience, and `hits` returns two node-level variables (`hub` and `authority`).
 
 ## Layout Options
 
@@ -94,7 +98,7 @@ ntwrk value [if] [in], from(varname) to(varname) [options]
 
 | Option group | Options |
 |---|---|
-| **Measures** | `measure(namelist)`, `weighted` |
+| **Measures** | `measure(namelist)`, `weighted`, `directedclustering`, `katzalpha(#)` |
 | **Parameters** | `iterations(#)`, `tolerance(#)`, `radius(#)` |
 | **Layout** | `layout(star\|fr\|sphere\|grid\|random\|spectral\|kk\|bipartite)`, `seed(#)`, `width(#)`, `height(#)` |
 | **Links** | `lquantile(#)`, `lwidth(str)`, `lalpha(#)`, `reduce(#)`, `lscale`, `lscalefactor(#)`, `lprop`, `lpropfactor(#)`, `lpalette(str)` |
