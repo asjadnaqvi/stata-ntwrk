@@ -11,7 +11,8 @@
 {marker syntax}{title:Syntax}
 {p 8 15 2}
 
-{cmd:ntwrk} {it:value} {ifin} {cmd:,} {opt from(varname)} {opt to(varname)} [{help ntwrk##measures:{it:network measures}}] [{help ntwrk##common:{it:parameters}}]
+{cmd:ntwrk} {it:value} {ifin} {cmd:,} {opt from(varname)} {opt to(varname)} 
+    [{help ntwrk##measures:{it:network measures}}] [{help ntwrk##common:{it:parameters}}]
 	[{help ntwrk##layout:{it:network layout}}] 
 	[{help ntwrk##nodes:{it:node options}}]
 	[{help ntwrk##links:{it:link options}}] [{help ntwrk##arcs:{it:arc options}}] 

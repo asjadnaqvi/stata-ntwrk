@@ -10,21 +10,17 @@ prog def ntwrk, sortpreserve
 
 	version 15
 	
-	local __raw_cmdline `"`0'"'
-	
 		syntax varlist(max = 1 numeric) [if] [in], from(string) to(string)   	 												///     // from, to, value
 		[ Measure(string) weighted directedclustering KATZALpha(real 0.1) ] 	///  	// node measures
 		[ ITERations(real 100) TOLerance(real 1e-6) radius(real 5) ]   										///		// common parameters
 		[ ARROWSize(string) ]													///		// arrow size
 		[ layout(string) seed(numlist max=1 >=0) width(real 150) height(real 150) 	] 			///		// draw the graphs
 		[ LQUANTile(numlist max=1 >=3) LColor(string) LWidth(string) LLABSize(string) LAlpha(real 80) reduce(real 0) lscale LSCALEFACtor(real 0.3333) lprop LPROPFACtor(real 0.3333) ] 		///		// link options
-		[ arc arcn(real 40) ARCRADius(numlist max=1 >0) ] 									///		// arc options
-		[ MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MLABSize(string) malpha(real 80) mlalpha(real 100) MSYMbol(string) mscale  MSCALEFACtor(real 0.3333) MLColor(string) MLWIDth(string) mprop MPROPFACtor(real 0.3333) ]			///		// node options
+		[ arc arcn(real 40) ARCRADius(numlist max=1 >0)  ] 									///		// arc options
+		[ MColor(string) MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MLABSize(string) malpha(real 80) mlalpha(real 100) MSYMbol(string) mscale  MSCALEFACtor(real 0.3333) MLColor(string) MLWIDth(string) mprop MPROPFACtor(real 0.3333) ]			///		// node options
 		[ save replace saveprefix(string) nograph lpalette(string) mpalette(string) NOVALues format(string) * ]      // saving options
 
-	local __has_nograph = regexm(lower(`"`__raw_cmdline'"'), "(^|,|[ \t])nograph([ \t]|$)")
 
-		
 	// check dependencies
 	cap findfile colorpalette.ado
 	if _rc != 0 {
@@ -93,6 +89,11 @@ prog def ntwrk, sortpreserve
 			exit 198
 		}
 	}
+
+	local __raw_cmdline `"`0'"'	
+	local __has_nograph = regexm(lower(`"`__raw_cmdline'"'), "(^|,|[ \t])nograph([ \t]|$)")
+
+		
 
 	local valid_measures "degree between indegree outdegree closeness harmonic clustering transitivity eccentricity eigenval eigenvec katz pagerank hits core reciprocity ancestors descendants"
 	local measure_list = lower(strtrim("`measure'"))
@@ -843,10 +844,10 @@ preserve
 		}
 
 		if "`mpalette'" == "" local mpalette cividis
-		
+		if "`mcolor'" 	== "" local mcolor khaki
 
 		if "`mprop'" == "" {
-			local mpalette khaki
+			local mpalette "`mcolor'"
 		}
 		else {
 			tokenize "`mpalette'", p(",")

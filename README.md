@@ -124,10 +124,9 @@ use "https://github.com/asjadnaqvi/stata-ntwrk/raw/refs/heads/main/data/BACI_HS2
 ### Minimal example
 
 ```stata
-
 ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
-	layout(fr) seed(1234) novalues ///
-	mlabsize(1.2) lwidth(0.30) lalpha(75) malpha(90)
+    layout(fr) seed(1234) novalues ///
+    mlabsize(1.2) lwidth(0.30) lalpha(75) malpha(90) mcolor(gs10)
 ```
 
 ![Minimal baseline](/figures/ntwrk_01_baseline_default.png)
@@ -164,32 +163,34 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 
 ```stata
 ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
-	measure(degree between) mvar(degree) ///
-	layout(fr) seed(1234) novalues ///
-	lpalette(cividis) mpalette(viridis) ///
-	lscale mscale lscalefactor(0.50) mscalefactor(0.45) ///
-	mlabsize(1.2) ///
-	lalpha(75) malpha(90)
+    measure(degree between) mvar(degree) ///
+    layout(fr) seed(1234) novalues ///
+    lpalette(cividis) mcolor(gs14)  ///
+    lprop lscale mscale msize(8) mlc(black)  mlabsize(1.2) 
 ```
 
 ![Fruchterman-Reingold layout](/figures/ntwrk_02_fr_seeded_clean.png)
 
 ### Layout gallery
 
-The commands below use the same data and baseline styling. The figures are shown in pairs so the no-arc and arc versions sit next to each other.
+The commands below use the same data and baseline styling with and without arcs:
 
 ```stata
-ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
-	measure(degree between pagerank) mvar(pagerank) ///
-	layout(fr) seed(1234) novalues ///
-	lpalette(rocket) msize(8) lwidth(0.6) ///
-	lscale mscale mlcolor(black)
+foreach x in fr kk spectral star sphere grid random bipartite shell spiral {
 
-ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
-	measure(degree between pagerank) mvar(pagerank) ///
-	layout(fr) seed(1234) novalues ///
-	lpalette(rocket) msize(8) lwidth(0.6) ///
-	lscale mscale mlcolor(black) arc
+	ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
+		measure(pagerank) mvar(pagerank) ///
+		layout(`x') seed(1234) novalues ///
+		lpalette(rocket) lprop msize(8) lwid(0.6)  ///
+		lscale mscale mlc(black) mc(gs14)
+
+
+	ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
+		measure(pagerank) mvar(pagerank) ///
+		layout(`x') seed(1234) novalues ///
+		lpalette(rocket) lprop msize(8) lwid(0.6)  ///
+		lscale mscale mlc(black) mc(gs14) arc
+}
 ```
 
 | Layout | No arc | Arc |
@@ -212,31 +213,44 @@ ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
 
 ```stata
 ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
-	measure(degree) mvar(degree) layout(fr) seed(42) ///
-	lquantile(6) mquantile(6) lscale mscale ///
-	lscalefactor(0.45) mscalefactor(0.45) ///
-	lpalette(rocket) mpalette(cividis) mprop noval ///
-	lalpha(72) malpha(50) mlabsize(1.2) msize(10) mlwidth(0.06) arc ///
-	title("ntwrk showcase: BACI 2024", size(small)) ///
-	subtitle("Filter: value > 100", size(vsmall))
+    measure(degree)  mvar(degree) layout(fr) seed(42) ///
+    lquantile(6) mquantile(6) lscale lprop mscale ///
+    lscalefactor(0.45) mscalefactor(0.45) ///
+    lpalette(rocket) mpalette(cividis) mprop noval ///
+    lalpha(72) malpha(50) mlabsize(1.2) msize(10) mlwidth(0.06) arc ///
+    title("ntwrk showcase: BACI 2024", size(small)) ///
+    subtitle("Filter: value > 100", size(vsmall)) 
 ```
 
 ![Styling showcase](/figures/ntwrk_08_styling_showcase.png)
 
 
 ```stata
-ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
-	measure(pagerank) mvar(pagerank) weighted layout(fr) seed(2026) ///
-	lquantile(10) lscale mscale mscalefactor(0.50) ///
-	lpalette(tab Orange-Gold, reverse) ///
-	malpha(50) mpalette(white) mprop mlapha(100) msize(8) mlabsize(1.5) ///
-	mlcolor(black) mlwidth(0.25) novalues lwidth(0.6) arc ///
-	title("Global trade network (BACI HS22, 2024)", size(medsmall)) ///
-	subtitle("Nodes: countries | Links: value > 100", size(vsmall))
+ntwrk value if value > 80, from(ex_iso3) to(im_iso3) ///
+    measure(pagerank) mvar(pagerank) weighted layout(fr) seed(2026) ///
+    lquantile(10) lscale mscale mscalefactor(0.50) ///
+    lpalette(tab Orange-Gold, reverse) lprop  ///
+    malpha(50) mpalette(white) mprop mlalpha(100) msize(8)  mlabsize(1.5) mlcolor(black)  mlwidth(0.25) ///
+    novalues lwidth(0.6) arc   ///
+    title("Global trade network (BACI HS22, 2024)", size(medsmall)) ///
+    subtitle("Nodes: countries | Links: value > 100", size(vsmall)) 
 ```
 
 ![Publication preset](/figures/ntwrk_10_publication_preset.png)
 
+
+```stata
+ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
+    measure(pagerank) mvar(pagerank) weighted layout(star) seed(2026) ///
+    lquantile(10) lscale mscale mscalefactor(0.50) ///
+    lpalette(tab Green-Gold, reverse) lprop  ///
+    lalpha(72) malpha(0) mlalpha(100) msize(10)  mlabsize(1.8) mlcolor(black)  mlwidth(0.15) ///
+    novalues lwidth(0.6) arc  ///
+    title("Global trade network (BACI HS22, 2024)", size(medsmall)) ///
+    subtitle("Nodes: countries | Links: value > 100", size(vsmall)) 
+```
+
+![Publication preset](/figures/ntwrk_10_publication_preset2.png)
 
 
 ## Feedback
