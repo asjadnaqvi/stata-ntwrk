@@ -12,7 +12,7 @@
 {p 8 15 2}
 
 {cmd:ntwrk} {it:value} {ifin} {cmd:,} {opt from(varname)} {opt to(varname)} 
-    [{help ntwrk##measures:{it:network measures}}] [{help ntwrk##common:{it:parameters}}]
+	[{help ntwrk##measures:{it:network measures}}] [{help ntwrk##common:{it:parameters}}]
 	[{help ntwrk##layout:{it:network layout}}] 
 	[{help ntwrk##nodes:{it:node options}}]
 	[{help ntwrk##links:{it:link options}}] [{help ntwrk##arcs:{it:arc options}}] 
@@ -48,31 +48,31 @@ If multiple measures are generated then it is highly recommended to save the net
 
 {p2coldent : {bf:degree}}Total degree computed as indegree + outdegree on the directed graph. {bf: degree} is calculated by default.{p_end}
 
-{p2coldent : {bf:indegree}}In-degree count on the directed graph (number of incoming neighbors), or weighted in-degree with {opt weighted}.{p_end}
+{p2coldent : {bf:indegree}}In-degree count on the directed graph (number of incoming neighbors).{p_end}
 
-{p2coldent : {bf:outdegree}}Out-degree count on the directed graph (number of outgoing neighbors), or weighted out-degree with {opt weighted}.{p_end}
+{p2coldent : {bf:outdegree}}Out-degree count on the directed graph (number of outgoing neighbors).{p_end}
 
-{p2coldent : {bf:between}}Compute normalized betweenness centrality. By default, shortest paths are unweighted; with {opt weighted}, paths use weighted edge cost.{p_end}
+{p2coldent : {bf:between}}Compute normalized betweenness centrality.{p_end}
 
-{p2coldent : {bf:closeness}}Compute inbound-reach closeness centrality (distances are evaluated on the reversed directed graph). By default, distances come from BFS; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0; isolated nodes can have closeness 0.{p_end}
+{p2coldent : {bf:closeness}}Compute inbound-reach closeness centrality (distances are evaluated on the reversed directed graph).{p_end}
 
-{p2coldent : {bf:harmonic}}Compute inbound harmonic centrality (distances are evaluated on the reversed directed graph). By default, distances come from BFS; with {opt weighted}, weighted path lengths are used. Unreachable nodes contribute 0.{p_end}
+{p2coldent : {bf:harmonic}}Compute inbound harmonic centrality (distances are evaluated on the reversed directed graph).{p_end}
 
-{p2coldent : {bf:clustering}}Compute local clustering coefficient. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
+{p2coldent : {bf:clustering}}Compute local clustering coefficient. Neighbor links are treated as connected if either direction exists.{p_end}
 
-{p2coldent : {bf:transitivity}}Compute global transitivity. Neighbor links are treated as connected if either direction exists (undirected-style triangle counting).{p_end}
+{p2coldent : {bf:transitivity}}Compute global transitivity. Neighbor links are treated as connected if either direction exists.{p_end}
 
-{p2coldent : {bf:eccentricity}}Compute node eccentricity on a symmetrized (undirected) topology as the maximum finite path length from each node. With {opt weighted}, weighted path lengths are computed on the symmetrized cost graph. Nodes with no reachable others return missing.{p_end}
+{p2coldent : {bf:eccentricity}}Compute node eccentricity on a symmetrized topology as the maximum finite path length from each node.{p_end}
 
-{p2coldent : {bf:eigenval}}Compute iterative spectral centrality (power iteration), controlled by {opt iterations()} and {opt tolerance()}. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+{p2coldent : {bf:eigenval}}Compute iterative spectral centrality (power iteration), controlled by {opt iterations()} and {opt tolerance()}.{p_end}
 
-{p2coldent : {bf:eigenvec}}Compute leading-eigenvector centrality. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+{p2coldent : {bf:eigenvec}}Compute leading-eigenvector centrality.{p_end}
 
-{p2coldent : {bf:katz}}Compute Katz centrality. Use {opt katzalpha()} to set the attenuation parameter; default is {opt katzalpha(0.1)} (beta is fixed at 1). With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+{p2coldent : {bf:katz}}Compute Katz centrality. Use {opt katzalpha()} to set the attenuation parameter; default is {opt katzalpha(0.1)} (beta is fixed at 1).{p_end}
 
-{p2coldent : {bf:pagerank}}Compute PageRank. Current fixed damping is 0.85; {opt iterations()} and {opt tolerance()} govern convergence checks. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+{p2coldent : {bf:pagerank}}Compute PageRank. Current fixed damping is 0.85; {opt iterations()} and {opt tolerance()} govern convergence checks.{p_end}
 
-{p2coldent : {bf:hits}}Compute HITS hub and authority scores. {opt iterations()} and {opt tolerance()} govern convergence checks. With {opt weighted}, the weighted adjacency matrix is used.{p_end}
+{p2coldent : {bf:hits}}Compute HITS hub and authority scores. {opt iterations()} and {opt tolerance()} govern convergence checks.{p_end}
 
 {p2coldent : {bf:core}}Compute undirected core number (k-core index) for each node using the symmetrized topology.{p_end}
 
@@ -251,10 +251,9 @@ Use the package details above and repository URL for software citation until an 
 
 {p 4 8 2}Jann, B. (2022). {browse "https://ideas.repec.org/p/bss/wpaper/43.html":Color palettes for Stata graphics: An update}. University of Bern Social Sciences Working Papers No. 43.
 
-{p 4 8 2}Grund, T. (2015). {browse "https://github.com/THOMASGRUND/NWCOMMANDS":nwcommands}.
+{p 4 8 2}Grund, T. (2014). {browse "https://github.com/THOMASGRUND/NWCOMMANDS":nwcommands}. Social network analysis in Stata.
 
-{p 4 8 2}{browse "https://networkx.org/en/":networkx}. Network analysis in Python.
-
+{p 4 8 2}Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart, "Exploring network structure, dynamics, and function using NetworkX", in Proceedings of the 7th Python in Science Conference (SciPy2008), Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds), (Pasadena, CA USA), pp. 11–15, Aug 2008. {browse "https://networkx.org/en/":networkx}.
 
 
 {title:Other visualization packages}
