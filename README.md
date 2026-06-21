@@ -124,13 +124,17 @@ use "https://github.com/asjadnaqvi/stata-ntwrk/raw/refs/heads/main/data/BACI_HS2
 ### Minimal example
 
 ```stata
-ntwrk value if value > 100, from(ex_iso3) to(im_iso3) ///
-    layout(fr) seed(1234) novalues ///
-    mlabsize(1.2) lwidth(0.30) lalpha(75) malpha(90) mcolor(gs10)
+ntwrk value if value > 100, from(ex_iso3) to(im_iso3) title("layout(fr) + random seed")
 ```
 
 ![Minimal baseline](/figures/ntwrk_01_baseline_default.png)
 
+
+```stata
+ntwrk value if value > 100, from(ex_iso3) to(im_iso3) seed(1234) title("layout(fr) + fixed seed")
+```
+
+![Minimal baseline](/figures/ntwrk_01_baseline_default2.png)
 
 ### Exporting node measures
 
