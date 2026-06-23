@@ -14,8 +14,8 @@
 {cmd:ntwrk} {it:value} {ifin} {cmd:,} {opt from(varname)} {opt to(varname)} 
 	[{help ntwrk##measures:{it:network measures}}] [{help ntwrk##common:{it:parameters}}]
 	[{help ntwrk##layout:{it:network layout}}] 
+	[{help ntwrk##links:{it:link options}}] [{help ntwrk##arcs:{it:arc options}}]
 	[{help ntwrk##nodes:{it:node options}}]
-	[{help ntwrk##links:{it:link options}}] [{help ntwrk##arcs:{it:arc options}}] 
 	[{help ntwrk##output:{it:save and export options}}] 
 
 
@@ -112,9 +112,9 @@ If multiple measures are generated then it is highly recommended to save the net
 
 {p2coldent : {opt layout(bipartite)}}Two-column layout: source-like nodes on the left, pure targets on the right (fallback split by outdegree vs indegree if needed). Good for sender-receiver structures.{p_end}
 
-{p2coldent : {opt layout(shell)}}Two-shell circular layout where higher-degree nodes are placed on the inner shell and remaining nodes on the outer shell.{p_end}
+{p2coldent : {opt layout(shell)}}Two-shell circular layout where higher-degree nodes are placed on the inner shell and remaining nodes on the outer shell. Deterministic.{p_end}
 
-{p2coldent : {opt layout(spiral)}}Place nodes along an outward spiral from the center.{p_end}
+{p2coldent : {opt layout(spiral)}}Nodes placed sequentially along an outward spiral from the center. Deterministic and useful for highlighting node ordering or connectivity patterns.{p_end}
 
 
 {p2coldent : {opt seed(num)}}Random seed applied before computation. This affects stochastic components such as {opt layout(fr)} and {opt layout(random)}.{p_end}
@@ -126,9 +126,13 @@ If multiple measures are generated then it is highly recommended to save the net
 
 {p2coldent : {opt lquant:ile(num)}}Number of link quantile classes for color/width grouping. Default is {opt lquantile(5)}.{p_end}
 
+{p2coldent : {opt lcolor(str)}}Color for links. If omitted, color is assigned by {opt lpalette()}.{p_end}
+
 {p2coldent : {opt lw:idth(num)}}Base line-width multiplier. Default is {opt lwidth(0.5)}.{p_end}
 
 {p2coldent : {opt llab:size(str)}}Link-label size for edge-value labels. Default is {opt llabsize(1.2)}.{p_end}
+
+{p2coldent : {opt llabc:olor(str)}}Link-label text color. Default is {opt llabcolor(black)}.{p_end}
 
 {p2coldent : {opt la:lpha(num)}}Link transparency. Default is {opt lalpha(80)}.{p_end}
 
@@ -145,6 +149,8 @@ If multiple measures are generated then it is highly recommended to save the net
 {p2coldent : {opt lpalette(str)}}Color palette for links via {help colorpalette}. The default is {it:eltblue}.{p_end}
 
 {p2coldent : {opt noval:ues}}Suppress edge-value labels.{p_end}
+
+{p2coldent : {opt valcond:ition(num)}}Suppress edge-value labels for links with values less than or equal to this threshold. Default is {opt valcondition(0)}.{p_end}
 
 
 {marker arcs}{dlgtab:Arc options}
@@ -164,13 +170,17 @@ If multiple measures are generated then it is highly recommended to save the net
 
 {p2coldent : {opt mvar(varname)}}Variable used for node quantile assignment (node color classes). If omitted, node classes are based on the selected node metric, which defaults to {it:degree}.{p_end}
 
+{p2coldent : {opt mcolor(str)}}Fill color for node circles. If omitted, color is assigned by {opt mpalette()}.{p_end}
+
 {p2coldent : {opt ms:ize(num)}}Base node size. Default is {opt msize(5)}.{p_end}
 
 {p2coldent : {opt mlab:size(str)}}Node-label size. Default is {opt mlabsize(1.6)}.{p_end}
 
+{p2coldent : {opt mlabc:olor(str)}}Node-label text color. Default is {opt mlabcolor(black)}.{p_end}
+
 {p2coldent : {opt ma:lpha(num)}}Node fill transparency. Default is {opt malpha(80)}.{p_end}
 
-{p2coldent : {opt mlap:ha(num)}}Node outline transparency. If omitted, it inherits {opt malpha()}. This lets you control fill and outline alpha separately.{p_end}
+{p2coldent : {opt mlap:ha(num)}}Node outline transparency. Default is {opt mlalpha(100)}. This lets you control fill and outline alpha separately.{p_end}
 
 {p2coldent : {opt msym:bol(str)}}Reserved marker-symbol option. Node areas are currently drawn as circle polygons and labels are drawn separately.{p_end}
 
@@ -180,13 +190,17 @@ If multiple measures are generated then it is highly recommended to save the net
 
 {p2coldent : {opt mlcolor(str)}}Outline color for node circles. If omitted, the outline follows the node fill color.{p_end}
 
-{p2coldent : {opt mlw:idth(num)}}Outline width for node circles.{p_end}
+{p2coldent : {opt mlw:idth(num)}}Outline width for node circles. Default is {opt mlwidth(0.08)}.{p_end}
 
 {p2coldent : {opt mprop}}Accepted by the parser for proportional node styling. In the current plotting routine it primarily affects palette handling; node sizes remain controlled by {opt msize}, {opt mscale}, and {opt mscalefactor()}.{p_end}
 
-{p2coldent : {opt mpropfac:tor(num)}}Accepted with {opt mprop}; currently reserved and has no distinct effect in the plotting routine.{p_end}
+{p2coldent : {opt mpropfac:tor(num)}}Accepted with {opt mprop}; currently reserved and has no distinct effect in the plotting routine. Default is {opt mpropfactor(0.3333)}.{p_end}
 
 {p2coldent : {opt mpalette(str)}}Color palette for node fills via {help colorpalette}. Current defaults are {it:gs12} without {opt mprop}, and {it:cividis} with {opt mprop}.{p_end}
+
+{p2coldent : {opt mrotate(num)}}Rotation angle applied to node labels (in degrees). Default is {opt mrotate(0)}.{p_end}
+
+{p2coldent : {opt mpoints(num)}}Number of points used to draw node circles as polygons. Minimum is {opt mpoints(3)}. Controls the smoothness of circular node visualization.{p_end}
 
 
 {marker output}{dlgtab:Output and export}
@@ -198,6 +212,10 @@ If multiple measures are generated then it is highly recommended to save the net
 {p2coldent : {opt saveprefix(str)}}Prefix for the exported dataset filename. If omitted with {opt save}, the default prefix is {it:_network}.{p_end}
 
 {p2coldent : {opt nogra:ph}}Skip plotting but still allow dataset export when {opt save} is specified.{p_end}
+
+{p2coldent : {opt noval:ues}}Suppress edge-value labels.{p_end}
+
+{p2coldent : {opt valcond:ition(num)}}Suppress edge-value labels for links with values less than or equal to this threshold. Default is {opt valcondition(0)}.{p_end}
 
 {p2coldent : {opt format(str)}}Numeric display format applied to edge-value labels in the graph (including curved labels when {opt arc} is used). Default is {opt format(%9.2f)}.{p_end}
 

@@ -55,6 +55,8 @@ The command supports the following network layouts:
 | `grid` | Arranges nodes on a regular rectangular grid. No topological information is encoded; best used when node labels matter more than positions. |
 | `random` | Places nodes at uniformly random coordinates within the canvas. Use `seed()` to fix placement. |
 | `bipartite` | Two-column layout that places nodes on two vertical tracks based on their role (source vs. destination in the edge list). Appropriate for two-mode or bipartite networks. |
+| `shell` | Two-shell circular layout where higher-degree nodes are placed on the inner shell and remaining nodes on the outer shell. Deterministic. |
+| `spiral` | Nodes placed sequentially along an outward spiral from the center. Deterministic and useful for highlighting node ordering or connectivity patterns. |
 
 
 ## Installation
@@ -100,11 +102,11 @@ ntwrk value [if] [in], from(varname) to(varname) [options]
 |---|---|
 | **Measures** | `measure(namelist)`, `weighted`, `directedclustering`, `katzalpha(#)` |
 | **Parameters** | `iterations(#)`, `tolerance(#)`, `radius(#)` |
-| **Layout** | `layout(star\|fr\|sphere\|grid\|random\|spectral\|kk\|bipartite)`, `seed(#)`, `width(#)`, `height(#)` |
-| **Links** | `lquantile(#)`, `lwidth(str)`, `lalpha(#)`, `reduce(#)`, `lscale`, `lscalefactor(#)`, `lprop`, `lpropfactor(#)`, `lpalette(str)` |
-| **Nodes** | `mquantile(#)`, `mvar(varname)`, `msize(str)`, `malpha(#)`, `mlapha(#)`, `msymbol(str)`, `mscale`, `mscalefactor(#)`, `mlcolor(str)`, `mlwidth(str)`, `mprop`, `mpropfactor(#)`, `mpalette(str)` |
-| **Arcs** | `arc`, `arcn(#)`, `arcradius(#)`, `arrowsize(str)` |
-| **Output** | `nograph`, `save`, `replace`, `saveprefix(str)`, `novalues`, `format(str)` |
+| **Layout** | `layout(star\|fr\|sphere\|grid\|random\|spectral\|kk\|bipartite\|shell\|spiral)`, `seed(#)`, `width(#)`, `height(#)` |
+| **Links** | `lquantile(#)`, `lcolor(str)`, `lwidth(#)`, `llabsize(#)`, `llabcolor(str)`, `lalpha(#)`, `reduce(#)`, `lscale`, `lscalefactor(#)`, `lprop`, `lpropfactor(#)`, `lpalette(str)`, `novalues`, `valcondition(#)` |
+| **Arcs** | `arc`, `arcn(#)`, `arcradius(#)`, `arrowsize(#)` |
+| **Nodes** | `mquantile(#)`, `mvar(varname)`, `mcolor(str)`, `msize(#)`, `mlabsize(#)`, `mlabcolor(str)`, `malpha(#)`, `mlalpha(#)`, `msymbol(str)`, `mscale`, `mscalefactor(#)`, `mlcolor(str)`, `mlwidth(#)`, `mprop`, `mpropfactor(#)`, `mpalette(str)`, `mrotate(#)`, `mpoints(#)` |
+| **Output** | `nograph`, `save`, `replace`, `saveprefix(str)`, `format(str)` |
 
 
 See the help file for full details:

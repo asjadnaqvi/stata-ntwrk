@@ -15,10 +15,10 @@ prog def ntwrk, sortpreserve
 		[ ITERations(real 100) TOLerance(real 1e-6) radius(real 5) ]   										///		// common parameters
 		[ ARROWSize(string) ]													///		// arrow size
 		[ layout(string) seed(numlist max=1 >=0) width(real 150) height(real 150) 	] 			///		// draw the graphs
-		[ LQUANTile(numlist max=1 >=3) LColor(string) LWidth(string) LLABSize(string) LAlpha(real 80) reduce(real 0) lscale LSCALEFACtor(real 0.3333) lprop LPROPFACtor(real 0.3333) ] 		///		// link options
+		[ LQUANTile(numlist max=1 >=3) LColor(string) LWidth(string) LLABColor(string) LLABSize(string) LAlpha(real 80) reduce(real 0) lscale LSCALEFACtor(real 0.3333) lprop LPROPFACtor(real 0.3333) ] 		///		// link options
 		[ arc arcn(real 40) ARCRADius(numlist max=1 >0)  ] 									///		// arc options
-		[ MColor(string) MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MLABSize(string) malpha(real 80) mlalpha(real 100) MSYMbol(string) mscale  MSCALEFACtor(real 0.3333) MLColor(string) MLWIDth(string) mprop MPROPFACtor(real 0.3333) ]			///		// node options
-		[ save replace saveprefix(string) nograph lpalette(string) mpalette(string) NOVALues format(string) * ]      // saving options
+		[ MColor(string) MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MLABColor(string) MLABSize(string) malpha(real 80) mlalpha(real 100) MSYMbol(string) mscale  MSCALEFACtor(real 0.3333) MLColor(string) MLWIDth(string) mprop MPROPFACtor(real 0.3333) mpoints(numlist max=1 >=3) ]			///		// node options
+		[ mrotate(real 0) save replace saveprefix(string) nograph lpalette(string) mpalette(string) NOVALues VALCONDition(real 0) format(string) * ]      // saving options
 
 
 	// check dependencies
@@ -65,10 +65,12 @@ prog def ntwrk, sortpreserve
 
 	if "`arrowsize'" 	== "" local arrowsize 1.2
 	if "`llabsize'" 	== "" local llabsize 1.2
+	if "`llabcolor'" 	== "" local llabcolor black
 	if "`lwidth'" 		== "" local lwidth 0.5	
 
 	if "`msize'" 		== "" local msize 5
 	if "`mlabsize'" 	== "" local mlabsize 1.6
+	if "`mlabcolor'" 	== "" local mlabcolor black	
 	if "`mlwidth'" 		== "" local mlwidth 0.08
 
 		
@@ -864,6 +866,9 @@ preserve
 
 		
 		// Calculate and store node circle radii (quantile-weighted by the selected node metric)
+
+		if "`mpoints'" == "" local mpoints 50
+
 		summ `node_metric' if _control==1, meanonly
 		local degmax = cond(r(max) > 0, r(max), 1)
 		
@@ -906,7 +911,7 @@ preserve
 				local cid_before = cond(r(N)==0 | missing(r(max)), 0, r(max))
 			}
 
-			shapes circle, radius(`rad') x0(`_xmean') y0(`_ymean') append genx(_circx) n(50) geny(_circy) genid(_circid) genorder(_circorder)
+			shapes circle, radius(`rad') x0(`_xmean') y0(`_ymean') append genx(_circx) n(`mpoints') geny(_circy) genid(_circid) genorder(_circorder) rotate(`mrotate') 
 
 			capture confirm variable _circid
 			if _rc {
@@ -952,7 +957,7 @@ preserve
 			gen long   _arcid   = .
 			gen long   _arcorder = .
 			gen        _arcsize = .
-			gen double _arclabel = .
+			gen double _arclabel = -999
 			
 			local arccount = 1
 			levelsof _lid if _control==0 & !_ownflow, local(lid_lvls)
@@ -971,67 +976,66 @@ preserve
 				local y2 = r(mean)
 				summ lquant if _lid==`lid' & _control==0, meanonly
 				local lq = r(mean)
-				summ `v' if _lid==`lid' & _control==0, meanonly
+				summ `v' if _lid==`lid' & _control==0 , meanonly
 				local vlab = r(mean)
 				
 				local arcopts ""
 				if "`arcradius'" != "" local arcopts "radius(`arcradius')"
-				arc, x1(`x1') y1(`y1') x2(`x2') y2(`y2') `arcopts' ///
+				arc, x1(`x2') y1(`y2') x2(`x1') y2(`y1') `arcopts' ///
 					 genx(_arcx) geny(_arcy) genid(_arcid) genorder(_arcorder) ///
 					 n(`arcn') append
 				
-				replace _arclabel = `vlab' if _arcid==`arccount' & missing(_arclabel)
+				replace _arclabel = `vlab' if _arcid==`arccount' & missing(_arclabel) & `vlab' >= `valcondition'
 				replace _arcsize = `lq' if _arcid==`arccount' & missing(_arcsize)
 
 				local ++arccount
 			}
 			format _arclabel `format'
 			
-		// Extract arrowhead coordinates from last two arc points
-		cap drop _arrow*
-		cap drop _arclab_x _arclab_y
-		
-		gen double _arrow_prev_x = .
-		gen double _arrow_prev_y = .
-		gen double _arrow_last_x = .
-		gen double _arrow_last_y = .
-		gen double _arclab_x = .
-		gen double _arclab_y = .
-		local arclaborder = ceil(`arcn' / 2)
-		
-		replace _arrow_last_x = _arcx 		if _arcorder==`arcn'
-		replace _arrow_last_y = _arcy 		if _arcorder==`arcn'
-		replace _arrow_prev_x = _arcx[_n-1] if _arcorder==`arcn'
-		replace _arrow_prev_y = _arcy[_n-1] if _arcorder==`arcn'
-		replace _arclab_x = _arcx 		if _arcorder==`arclaborder'
-		replace _arclab_y = _arcy 		if _arcorder==`arclaborder'
-		
-		// build line plots for each weighted category
-		levelsof lquant if _control==0, local(lvls)
-		local items = r(r)
-
-		foreach x of local lvls {
-			if "`lscale'" != "" {
-				local lwgt = `lwidth' * (`x' / `items')^`lscalefactor' 
-			}
-			else {
-				local lwgt = `lwidth'
-			}
-			local arrows `arrows' (line _arcy _arcx if _arcsize==`x', cmissing(n) lw(`lwgt') lc("`lclr`x''%`lalpha'"))
-		}
+			// Extract arrowhead coordinates from last two arc points
+			cap drop _arrow*
+			cap drop _arclab_x _arclab_y
 			
-		if "`novalues'" == "" {
+			gen double _arrow_prev_x = .
+			gen double _arrow_prev_y = .
+			gen double _arrow_last_x = .
+			gen double _arrow_last_y = .
+			gen double _arclab_x = .
+			gen double _arclab_y = .
+			local arclaborder = ceil(`arcn' / 2)
+			
+			replace _arrow_last_x = _arcx 		if _arcorder==`arcn'
+			replace _arrow_last_y = _arcy 		if _arcorder==`arcn'
+			replace _arrow_prev_x = _arcx[_n-1] if _arcorder==`arcn'
+			replace _arrow_prev_y = _arcy[_n-1] if _arcorder==`arcn'
+			replace _arclab_x = _arcx 		if _arcorder==`arclaborder' & _arclabel >= `valcondition'
+			replace _arclab_y = _arcy 		if _arcorder==`arclaborder' & _arclabel >= `valcondition'
+			
+			// build line plots for each weighted category
 			levelsof lquant if _control==0, local(lvls)
+			local items = r(r)
+
 			foreach x of local lvls {
-				local linkdots `linkdots' (scatter _arclab_y _arclab_x if _arcsize==`x' & _arcorder==`arclaborder', msymbol(none) mlabpos(0) mcolor(none) mlab(_arclabel) mlabsize(`llabsize') mlabcolor(black))
+				if "`lscale'" != "" {
+					local lwgt = `lwidth' * (`x' / `items')^`lscalefactor' 
+				}
+				else {
+					local lwgt = `lwidth'
+				}
+				local arrows `arrows' (line _arcy _arcx if _arcsize==`x', cmissing(n) lw(`lwgt') lc("`lclr`x''%`lalpha'"))
+
+				local arrowheads `arrowheads' (pcarrow _arrow_prev_y _arrow_prev_x _arrow_last_y _arrow_last_x if _arcorder==`arcn' & _arcsize==`x', msize(`arrowsize') mcolor("`lclr`x''%`lalpha'") lw(`lwgt')  lc("`lclr`x''%`lalpha'"))
+
 			}
-		}
-		
-		// Add arrowheads using the same link palette colors
-		levelsof lquant if _control==0, local(lvls)
-		foreach x of local lvls {
-			local arrowheads `arrowheads' (pcarrow _arrow_prev_y _arrow_prev_x _arrow_last_y _arrow_last_x if _arcorder==`arcn' & _arcsize==`x', msize(`arrowsize') mcolor("`lclr`x''%`lalpha'") lc("`lclr`x''%`lalpha'"))
-		}
+			
+			if "`novalues'" == ""  {
+				levelsof lquant if _control==0 , local(lvls)
+				foreach x of local lvls {
+					local linkdots `linkdots' (scatter _arclab_y _arclab_x if _arcsize==`x' & _arcorder==`arclaborder' & _arclabel >= `valcondition', msymbol(none) msize(zero) mlabpos(0) mcolor(none) mlab(_arclabel) mlabsize(`llabsize') mlabcolor(`llabcolor'))
+				}
+			}
+			
+
 		}
 		else {
 			// straight pcarrow path (default) - using trimmed edges
@@ -1046,10 +1050,10 @@ preserve
 					local lwgt = `lwidth'
 				}
 				
-				local arrows `arrows' (pcarrow _fy_edge _fx_edge _ty_edge _tx_edge if !_ownflow & lquant==`x' & _control==0, msize(`arrowsize') lw(`lwgt') lc("`lclr`x''%`lalpha'") mc("`lclr`x''%`lalpha'")  ) 
+				local arrows `arrows' (pcarrow _ty_edge _tx_edge _fy_edge _fx_edge  if !_ownflow & lquant==`x' & _control==0, msize(`arrowsize') lw(`lwgt') lc("`lclr`x''%`lalpha'") mc("`lclr`x''%`lalpha'")  ) 
 				
 				if "`novalues'" == "" {
-					local linkdots `linkdots' (scatter _midy _midx if !_ownflow & lquant==`x' & _control==0, mlabpos(0) mcolor(none) mlab(`v') mlabsize(`llabsize') mlabcolor(black)  ) 
+					local linkdots `linkdots' (scatter _midy _midx if !_ownflow & lquant==`x' & _control==0 & `v' >= `valcondition', msymbol(none) msize(zero) mlabpos(0) mcolor(none) mlab(`v') mlabsize(`llabsize') mlabcolor(`llabcolor')  ) 
 				}
 			}
 		}
@@ -1076,7 +1080,7 @@ preserve
 		// weighted nodes
 
 		// labels only - circles drawn via area above
-		local dots (scatter _y _x if _control, msymbol(none) mlabpos(0) mlab(_label) mlabsize(`mlabsize') mlabcolor(black))
+		local dots (scatter _y _x if _control, msymbol(none) mlabpos(0) mlab(_label) mlabsize(`mlabsize') mlabcolor(`mlabcolor') )
 	
 	
 	
