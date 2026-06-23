@@ -148,10 +148,6 @@ If multiple measures are generated then it is highly recommended to save the net
 
 {p2coldent : {opt lpalette(str)}}Color palette for links via {help colorpalette}. The default is {it:eltblue}.{p_end}
 
-{p2coldent : {opt noval:ues}}Suppress edge-value labels.{p_end}
-
-{p2coldent : {opt valcond:ition(num)}}Suppress edge-value labels for links with values less than or equal to this threshold. Default is {opt valcondition(0)}.{p_end}
-
 
 {marker arcs}{dlgtab:Arc options}
 
