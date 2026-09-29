@@ -63,13 +63,13 @@ The command supports the following network layouts:
 
 The package can be installed via SSC or GitHub. The GitHub version might be more recent due to bug fixes and feature updates.
 
-SSC (pending):
+SSC (v1.0):
 
 ```stata
-XXXX
+ssc install ntwrk, replace
 ```
 
-GitHub (v1.0 beta):
+GitHub (v1.0):
 
 ```stata
 net install ntwrk, from("https://raw.githubusercontent.com/asjadnaqvi/stata-ntwrk/main/installation/") replace
