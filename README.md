@@ -7,10 +7,37 @@
 
 
 
-# ntwrk v1.0 (beta)
-(17 Jun 2026)
+# ntwrk v1.1 (beta)
+(1 Oct 2026)
 
 `ntwrk` is a Stata package for network analysis and visualization from edge-list data.
+
+
+## Installation
+
+The package can be installed via SSC or GitHub. The GitHub version might be more recent due to bug fixes and feature updates.
+
+SSC (pending):
+
+```stata (v1.0)
+ssc install ntwrk, replace
+```
+
+GitHub (v1.1):
+
+```stata
+net install ntwrk, from("https://raw.githubusercontent.com/asjadnaqvi/stata-ntwrk/main/installation/") replace
+```
+
+Additional packages required:
+
+```stata
+ssc install palettes, replace
+ssc install colrspace, replace
+ssc install graphfunctions, replace
+```
+
+
 
 
 
@@ -59,36 +86,6 @@ The command supports the following network layouts:
 | `spiral` | Nodes placed sequentially along an outward spiral from the center. Deterministic and useful for highlighting node ordering or connectivity patterns. |
 
 
-## Installation
-
-The package can be installed via SSC or GitHub. The GitHub version might be more recent due to bug fixes and feature updates.
-
-SSC (pending):
-
-```stata
-XXXX
-```
-
-GitHub (v1.0 beta):
-
-```stata
-net install ntwrk, from("https://raw.githubusercontent.com/asjadnaqvi/stata-ntwrk/main/installation/") replace
-```
-
-Required packages:
-
-```stata
-ssc install palettes, replace
-ssc install colrspace, replace
-ssc install graphfunctions, replace
-```
-
-
-If these are already installed, then also please periodically check for updates:
-
-```stata
-ado update, update
-```
 
 
 
@@ -102,7 +99,7 @@ ntwrk value [if] [in], from(varname) to(varname) [options]
 |---|---|
 | **Measures** | `measure(namelist)`, `weighted`, `directedclustering`, `katzalpha(#)` |
 | **Parameters** | `iterations(#)`, `tolerance(#)`, `radius(#)` |
-| **Layout** | `layout(star\|fr\|sphere\|grid\|random\|spectral\|kk\|bipartite\|shell\|spiral)`, `seed(#)`, `width(#)`, `height(#)` |
+| **Layout** | `layout(star\|fr\|sphere\|grid\|random\|spectral\|kk\|bipartite\|shell\|spiral)`, `seed(#)`, `width(#)`, `height(#)`, `scale(#)`, `rotate(#)` |
 | **Links** | `lquantile(#)`, `lcolor(str)`, `lwidth(#)`, `llabsize(#)`, `llabcolor(str)`, `lalpha(#)`, `reduce(#)`, `lscale`, `lscalefactor(#)`, `lprop`, `lpropfactor(#)`, `lpalette(str)`, `novalues`, `valcondition(#)` |
 | **Arcs** | `arc`, `arcn(#)`, `arcradius(#)`, `arrowsize(#)` |
 | **Nodes** | `mquantile(#)`, `mvar(varname)`, `mcolor(str)`, `msize(#)`, `mlabsize(#)`, `mlabcolor(str)`, `malpha(#)`, `mlalpha(#)`, `msymbol(str)`, `mscale`, `mscalefactor(#)`, `mlcolor(str)`, `mlwidth(#)`, `mprop`, `mpropfactor(#)`, `mpalette(str)`, `mrotate(#)`, `mpoints(#)` |
@@ -266,6 +263,10 @@ Please open an issue to report bugs, feature requests, or other suggestions:
 https://github.com/asjadnaqvi/stata-ntwrk/issues
 
 ## Change log
+
+**v1.1 (beta) (1 Oct 2026)**
+- Added `scale()` and `rotate()` options for center-based scaling and rotation.
+- Refined layout coordinate normalization and graph sizing.
 
 **v1.0 (beta) (17 Jun 2026)**
 - First public beta release.

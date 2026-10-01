@@ -1,11 +1,11 @@
 {smcl}
-{* 17Jun2026}{...}
+{* 1Oct2026}{...}
 {hi:help ntwrk}{...}
-{right:{browse "https://github.com/asjadnaqvi/stata-ntwrk":ntwrk v1.0 (beta) (GitHub)}}
+{right:{browse "https://github.com/asjadnaqvi/stata-ntwrk":ntwrk v1.1 (beta) (GitHub)}}
 
 {hline}
 
-{title:ntwrk}: is a Stata package for network analysis and visualization from edge-list data.
+{title:ntwrk}: is a Stata package for network analysis and network visualizations.
 
 
 {marker syntax}{title:Syntax}
@@ -120,6 +120,10 @@ If multiple measures are generated then it is highly recommended to save the net
 {p2coldent : {opt seed(num)}}Random seed applied before computation. This affects stochastic components such as {opt layout(fr)} and {opt layout(random)}.{p_end}
 
 {p2coldent : {opt width(num)}, {opt height(num)}}Target frame dimensions. Defaults are {opt width(150)} and {opt height(150)}.{p_end}
+
+{p2coldent : {opt scale(num)}}Post-layout scaling factor applied from the center. Default is {opt scale(1)} (no change). Use values less than 1 to contract node positions toward the center and values greater than 1 to expand spacing away from the center while preserving the layout geometry.{p_end}
+
+{p2coldent : {opt rotate(num)}}Rotation angle for the whole network. Default is {opt rotate(0)}. Positive values rotate counterclockwise and negative values rotate clockwise.{p_end}
 
 
 {marker links}{dlgtab:Link options}
@@ -242,8 +246,8 @@ Please submit bugs, errors, feature requests on {browse "https://github.com/asja
 
 {title:Package details}
 
-Version      : {bf:ntwrk} v1.0 (beta)
-This release : 17 Jun 2026
+Version      : {bf:ntwrk} v1.1 (beta)
+This release : 1 Oct 2026
 First release: 17 Jun 2026
 Repository   : {browse "https://github.com/asjadnaqvi/stata-ntwrk":GitHub}
 Keywords     : Stata, networks, graphs

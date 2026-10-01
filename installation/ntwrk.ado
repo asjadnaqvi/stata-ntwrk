@@ -1,7 +1,8 @@
-*! ntwrk v1.0 (beta)
+*! ntwrk v1.1 (01 Oct 2026)
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
-* v1.0  (17 Jun 2026): first release (beta)
+* v1.1  (01 Oct 2026): new options scale() and rotate() added. Minor code fixes.
+* v1.0  (17 Jun 2026): First release (beta)
 
 
 cap prog drop ntwrk
@@ -14,7 +15,7 @@ prog def ntwrk, sortpreserve
 		[ Measure(string) weighted directedclustering KATZALpha(real 0.1) ] 	///  	// node measures
 		[ ITERations(real 100) TOLerance(real 1e-6) radius(real 5) ]   										///		// common parameters
 		[ ARROWSize(string) ]													///		// arrow size
-		[ layout(string) seed(numlist max=1 >=0) width(real 150) height(real 150) 	] 			///		// draw the graphs
+		[ layout(string) seed(numlist max=1 >=0) width(real 150) height(real 150) scale(real 1) ROTate(real 0) 	] 			///		// draw the graphs
 		[ LQUANTile(numlist max=1 >=3) LColor(string) LWidth(string) LLABColor(string) LLABSize(string) LAlpha(real 80) reduce(real 0) lscale LSCALEFACtor(real 0.3333) lprop LPROPFACtor(real 0.3333) ] 		///		// link options
 		[ arc arcn(real 40) ARCRADius(numlist max=1 >0)  ] 									///		// arc options
 		[ MColor(string) MQUANTile(numlist max=1 >=3) mvar(string) MSize(string) MLABColor(string) MLABSize(string) malpha(real 80) mlalpha(real 100) MSYMbol(string) mscale  MSCALEFACtor(real 0.3333) MLColor(string) MLWIDth(string) mprop MPROPFACtor(real 0.3333) mpoints(numlist max=1 >=3) ]			///		// node options
@@ -60,6 +61,11 @@ prog def ntwrk, sortpreserve
 
 	if `reduce' < 0 {
 		di as error "{opt reduce()} must be non-negative."
+		exit 198
+	}
+
+	if `scale' <= 0 {
+		di as error "{opt scale()} must be greater than 0."
 		exit 198
 	}
 
@@ -596,13 +602,30 @@ preserve
 	local yspan = `ymax' - `ymin'
 	local span = `xspan'
 	if (`yspan' > `span') local span = `yspan'
+	local frame = `width'
+	if (`height' < `frame') local frame = `height'
 	local xmid = (`xmax' + `xmin') / 2
 	local ymid = (`ymax' + `ymin') / 2
 
-	replace _x = ((_x - `xmid') / `span') * `width'  + (`width' / 2)	if (`span' > 0) 
-	replace _y = ((_y - `ymid') / `span') * `height' + (`height' / 2)	if (`span' > 0) 
+	// Use one shared frame scale so x/y units remain identical.
+	replace _x = ((_x - `xmid') / `span') * `frame' + (`width' / 2)	if (`span' > 0) 
+	replace _y = ((_y - `ymid') / `span') * `frame' + (`height' / 2)	if (`span' > 0) 
 	replace _x = `width' / 2											if (`span' <= 0) 
 	replace _y = `height' / 2											if (`span' <= 0) 
+
+	// Expand/contract around the canvas center while preserving node geometry.
+	replace _x = ((_x - (`width' / 2)) * `scale') + (`width' / 2)
+	replace _y = ((_y - (`height' / 2)) * `scale') + (`height' / 2)
+
+	// Rotate the whole network around the canvas center.
+	if (`rotate' != 0) {
+		tempvar _x0 _y0
+		gen double `_x0' = _x
+		gen double `_y0' = _y
+		local _theta = `rotate' * _pi / 180
+		replace _x = (`width' / 2) + ((`_x0' - (`width' / 2)) * cos(`_theta') - ((`_y0' - (`height' / 2)) * sin(`_theta')))
+		replace _y = (`height' / 2) + ((`_x0' - (`width' / 2)) * sin(`_theta') + ((`_y0' - (`height' / 2)) * cos(`_theta')))
+	}
 
 	keep _id _x _y
 	merge 1:1 _id using `_node_map'
@@ -1115,7 +1138,7 @@ preserve
 			local ymin = min(`ymin', r(min))
 			local ymax = max(`ymax', r(max))
 			
-			// Set equal range for both axes
+			// Build one shared min/max list and use it on both axes.
 			local range_min = min(`xmin', `ymin')
 			local range_max = max(`xmax', `ymax')
 			local range_str `range_min' `range_max'
@@ -1133,8 +1156,8 @@ preserve
 		, ///
 		legend(off) ///
 			xscale(off range(`range_str')) yscale(off range(`range_str'))	///
-			xlabel(, nogrid) ylabel(, nogrid) ///
-			aspect(1) xsize(1) ysize(1) `options'
+			xlabel(`range_str', nogrid) ylabel(`range_str', nogrid) ///
+			aspect(1) xsize(3) ysize(3) `options'
 	
 
 	

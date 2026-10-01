@@ -1,9 +1,9 @@
-v 1.0
-d NTWRK: A Stata package for network analysis
+v 1.1
+d NTWRK: A Stata package for network analysis and network visualizations.
 d  
-d This version: 17 Jun 2026
+d This version: 01 Oct 2026
 d First version: 17 Jun 2026
 d
-d Asjad Naqvi, 
+d Asjad Naqvi 
 d asjadnaqvi@gmail.com
 
