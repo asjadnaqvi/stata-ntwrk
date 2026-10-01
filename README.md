@@ -7,7 +7,7 @@
 
 
 
-# ntwrk v1.1 (beta)
+# ntwrk v1.1 
 (1 Oct 2026)
 
 `ntwrk` is a Stata package for network analysis and visualization from edge-list data.
@@ -17,9 +17,9 @@
 
 The package can be installed via SSC or GitHub. The GitHub version might be more recent due to bug fixes and feature updates.
 
-SSC (pending):
+SSC (v1.0):
 
-```stata (v1.0)
+```stata
 ssc install ntwrk, replace
 ```
 
